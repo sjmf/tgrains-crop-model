@@ -24,7 +24,15 @@ Vagrant.configure("2") do |config|
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # NOTE: This will enable public access to the opened port
   # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Jupyter notebook (development)
   config.vm.network "forwarded_port", guest: 8888, host: 8888, host_ip: "127.0.0.1"
+
+  # Flask (development)
+  config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
+
+  # Nginx/UWSGI (production)
+  config.vm.network "forwarded_port", guest: 80, host: 80, host_ip: "127.0.0.1"
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
@@ -65,26 +73,35 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
+
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y python3
+    apt-get install -y build-essential python3
+
 
     sudo -i -u vagrant bash <<"EOF"
-        #Install conda
-        wget -nv https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-        bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda
-        rm Miniconda3-latest-Linux-x86_64.sh
-        echo "PATH=\$PATH:\$HOME/miniconda/bin" >> .bash_profile
-        echo "source $HOME/.bashrc" >> .bash_profile
+        if ! [[ -d "~/miniconda" ]];
+        then
+            #Install conda
+            wget -nv https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda
+            rm Miniconda3-latest-Linux-x86_64.sh
+            echo "PATH=\$PATH:\$HOME/miniconda/bin" >> .bash_profile
+            echo "source $HOME/.bashrc" >> .bash_profile
+        fi
 EOF
+
 
     sudo -i -u vagrant bash <<"EOF"
         conda init bash
         eval "$(conda shell.bash hook)"
         conda update -y -n base -c defaults conda
-        conda create -y --name cropmodel
-        conda activate cropmodel
+        # We originally configured a conda environment here, but leaving it as (base) solves problems!
         conda install -y -c conda-forge cppyy
+        conda install -y flask markdown
 EOF
   SHELL
 end
+
+  #NB: In configuring the interpreter in PyCharm, specify the interpreter as /home/vagrant/miniconda/bin/python
+  #    It will fail silently if it can't find the executable (e.g. if it's set to the default /usr/bin/python)
