@@ -7,8 +7,8 @@ from array import array
 from ctypes import c_double
 from ctypes import c_int
 
-cppyy.include('Landscape2019_LinuxSO.h')
-cppyy.load_library('libLandscape2019_LinuxSO.so')
+cppyy.include('model/Landscape2019_LinuxSO.h')
+cppyy.load_library('model/libLandscape2019_LinuxSO.so')
 
 #void InitialiseTGRAINS_RLM(
 #    int     myUniqueLandscapeID, 
