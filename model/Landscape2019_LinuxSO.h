@@ -1,36 +1,19 @@
 #pragma once
-
+#include <vector>
 #include <string>
 
-//#ifdef __cplusplus 
-//extern "C" {
-//#endif
+void initialiseTGRAINS_RLM(int myUniqueLandscapeID, double& maxCropArea, std::vector<double>& cropAreas, std::vector<int>& livestockNumbers, int& errorFlag);
 
-//Add frontend functions here.
-
-const int MaxNumCrops(15);
-const int MaxNumAnimals(5);
-
-//extern "C"{
-extern "C" int add(int a, int b);
-extern "C" int subtract(int a, int b);
-
-extern "C" void InitialiseTGRAINS_RLM(
-	int myUniqueLandscapeID, double& MaxCropArea, int NumCropsTypeAvailable, int NumLivestockTypeAv, double CropAreas[],
-	int LivestockNumbersBL[], int& ErrorFlag
+void runTGRAINS_RLM(
+	std::vector<double> cropAreas, std::vector<int> livestockNumbers,
+	double& greenhouseGasEmissions, double& nLeach, std::vector<double>& pesticideImpacts,
+	double& profit, double& production,
+	std::vector<double>& nutritionaldelivery, std::vector<double>& healthRiskFactors,
+	int& errorFlag
 );
 
-extern "C" void RunTGRAINS_RLM(
-	double CropAreas[], int LivestockNumbers[], double& GreenhouseGasEmissions, double& NLeach,
-	double PesticideImpacts[], double& Profit, double& Production, double Nutritionaldelivery[],
-	double HealthRiskFactors[],
-	int& ErrorFlag
-);
+std::vector<int> getLandscapeIDs();
+std::string getLandscapeString(int index);
+std::string getCropString(int index);
+std::string getLiveStockString(int index);
 
-extern "C" char* GetCropString(int index);
-extern "C" char * GetLiveStockString(int index);
-//}
-
-//#ifdef __cplusplus
-//}
-//#endif
