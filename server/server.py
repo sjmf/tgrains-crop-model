@@ -5,6 +5,7 @@ from flask import Flask, Response, Blueprint, Markup, escape, request, redirect,
 
 from CropModel import CropModel
 
+
 HELPSTRING="""
 
 # Crop Model API Routes
@@ -37,12 +38,13 @@ crops = Blueprint('crops', __name__, template_folder='templates')
 
 # Configuration
 CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
+FLASK_ENV='development'
 
-DEBUG = True
 app.config.from_object(__name__)
 
 flask_options = {
     'host': '0.0.0.0',
+    'debug': True,
     #'threaded': True
 }
 
@@ -68,16 +70,19 @@ def test():
     log.info(request)
     return "test!"
 
-@crops.route('model', methods=['POST'])
+@crops.route('model', methods=['GET'])
 def model():
-    v = request.get_json()
+    #v = request.get_json()
+
+    # Initialise crop model
     model = CropModel()
     model.initialise_model()
-    model.run_model()
 
+    model.run_model()
     log.info(request)
 
-    return Response(str(model), mimetype='application/json'), 200
+    return Response(json.dumps(model.toDict()), mimetype='application/json'), 200
+    #return Response(str(model), mimetype='application/json'), 200
 
 
 # Register blueprint to the app

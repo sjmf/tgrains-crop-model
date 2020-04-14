@@ -5,8 +5,11 @@
 import cppyy
 from cppyy import ll
 
-cppyy.include('model/Landscape2019_LinuxSO.h')
-cppyy.load_library('model/libLandscape2019_LinuxSO.so')
+MODEL_HEADER_H = 'model/Landscape2019_LinuxSO.h'
+MODEL_LIBRARY_SO = './model/libLandscape2019_LinuxSO.so'
+
+cppyy.include(MODEL_HEADER_H)
+cppyy.load_library(MODEL_LIBRARY_SO)
 # Need to call this with cppyy.ll cppyy.ll.signals_as_exception
 cppyy.ll.set_signals_as_exception(True)
 
@@ -164,8 +167,16 @@ class CropModel:
         return self.cropData
 
     ##
+    # Get built-in landscape string identifiers
+    def get_landscape_string(self, index):
+
+        if not self.initialised:
+            raise CropModelInitException("Model not initialised")
+
+        return cppyy.gbl.getLandscapeString(index)
+
+    ##
     # Get built-in crop string identifiers
-    # NB: this does not match the documentation
     def get_crop_string(self, index):
 
         if not self.initialised:
@@ -182,10 +193,28 @@ class CropModel:
 
         return cppyy.gbl.getLiveStockString(index)
 
+    ##
+    # Set Crop Areas
+    def set_crop_areas(self, cropAreas):
 
-if __name__ == "__main__":
+        if type(cropAreas) is not list:
+            raise CropModelException("Crop Areas must be a list of floating-point numbers!")
+        if len(cropAreas) != len(self.cropData.cropAreas):
+            raise CropModelException("Crop Areas must be {0} items in length!".format(len(self.cropData.cropAreas)))
+        for c in cropAreas:
+            if type(c) is not float:
+                raise CropModelException("Crop Areas must be numeric!")
+
+        self.cropData.cropAreas = cropAreas
+
+    ##
+    # Set Livestock Numbers
+    def set_livestock_numbers(self, liveStockNumbers):
+        raise CropModelException("Not implemented yet!")
+
+
+def test():
     print("Running Crop Model Tests...")
-
     model = CropModel()
 
     print("Initialising Model...")
@@ -198,9 +227,12 @@ if __name__ == "__main__":
 
     print()
 
-    print(model.landscapeIDs)
+    print(model.get_landscape_string(model.landscapeIDs[0]))
     print(model.get_crop_string(1))
     print(model.get_livestock_string(1))
 
     print("Success!")
+    return 0;
 
+if __name__ == "__main__":
+    test()
