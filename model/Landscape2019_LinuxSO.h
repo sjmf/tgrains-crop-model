@@ -13,7 +13,7 @@ void runTGRAINS_RLM(
 );
 
 std::vector<int> getLandscapeIDs();
-std::string getLandscapeString(int index);
-std::string getCropString(int index);
-std::string getLiveStockString(int index);
+char * getLandscapeString(int index);
+char * getCropString(int index);
+char * getLiveStockString(int index);
 
