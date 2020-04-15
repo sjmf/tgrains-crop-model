@@ -1,0 +1,111 @@
+
+body {
+    font-family: Roboto, sans-serif;
+
+    /*sticky footer*/
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+nav {
+    position:fixed;
+}
+
+main {
+    padding-top: 65px;
+}
+
+/* header, footer positioning */
+
+main, footer {
+    z-index: -10;
+    padding-left: 300px;
+}
+
+@media only screen and (max-width : 992px) {
+    header, main, footer {
+        padding-left: 0;
+    }
+}
+
+@media only screen and (max-width: 992px) {
+    input {
+        height: 2rem !important;
+    }
+}
+
+/* Adjust container width */
+@media only screen and (min-width:993px) {
+    .container {
+        width: 80%;
+    }
+}
+@media only screen and (min-width:601px) {
+    .container {
+        width: 95%;
+    }
+}
+
+
+/* Sidenav */
+
+@media only screen and (min-width : 992px) {
+    .sidenav {
+        top: 65px;
+        height: 100%;
+        padding-bottom: 0;
+    }
+}
+
+a.sidenav-trigger {
+    position: absolute;
+    color: white;
+    font-size: 48px;
+    line-height: 1.0;
+    padding-left: 10px;
+}
+
+.sidenav li {
+    line-height: 1rem;
+    padding: 0 10px 0 10px;
+}
+
+.sidenav li:hover {
+    background-color:#eee;
+}
+
+/* fix https://github.com/Dogfalo/materialize/issues/2112 using dummy element */
+.sidenav li:last-child {
+    height:65px;
+    background-color:#fff;
+}
+
+span.variable {
+    display:inline-block;
+    width:125px;
+}
+
+.select-wrapper + label {
+    top:-10px;
+}
+
+span.variable + input[type="number"]:not(.browser-default) {
+    width:125px;
+}
+
+.variable-row {
+    padding:15px;
+}
+
+/* Footer */
+div.logos {
+    text-align: center;
+}
+img.logos {
+    max-height:100px;
+}

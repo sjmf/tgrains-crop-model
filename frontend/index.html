@@ -17,454 +17,372 @@
   <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto">
   <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
-  <!--Move to: <link rel="stylesheet" href="styles.css">-->
-  <style type="text/css">
-    body {
-      font-family: Roboto;
-
-      /*sticky footer*/
-      display: flex;
-      min-height: 100vh;
-      flex-direction: column;
-    }
-
-    main {
-      flex: 1 0 auto;
-    }
-
-    @media only screen and (min-width: 900px) {
-
-      .main-stuff {
-        max-width: 1920px;
-        margin: auto;
-      }
-
-      input {
-        height: 2rem !important;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 
   <!-- Scripts -->
   <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', function() {
-          var elems = document.querySelectorAll('select');
+          /*var elems = document.querySelectorAll('select');
           var instances = M.FormSelect.init(elems, {});
+
+          var elems = document.querySelectorAll('.sidenav');
+          var instances = M.Sidenav.init(elems, {});*/
+
+          M.AutoInit();
       });
   </script>
-
 
   <!-- G analytics here -->
 </head>
 
 <body class="grey lighten-2">
 
-  <div class="nav">
-    <nav>
-      <div class="row nav-wrapper green darken-4">
-        <div class="col s12">
-          <a href="#" class="brand-logo"><i class="material-icons">terrain</i>TGRAINS Crop Model</a>
-          <ul id="nav-mobile" class="right hide-on-med-and-down">
-            <li><a href="https://tgrains.com">TGRAINS Website</a></li>
-          </ul>
-        </div>
+<header>
+<!-- TOP NAVBAR -->
+  <nav>
+    <div class="row nav-wrapper green darken-4">
+      <div class="col s12">
+        <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+        <a href="#" class="brand-logo"><i class="material-icons">terrain</i>TGRAINS <span class="hide-on-small-only">Crop Model</span></a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+          <li><a href="https://tgrains.com">TGRAINS Website</a></li>
+        </ul>
       </div>
-    </nav>
-  </div>
+    </div>
+  </nav>
+</header>
 
-  <div class="divider"></div>
+<!-- VALUE SELECT SIDEBAR -->
+<aside id="slide-out" class="sidenav sidenav-fixed">
+  <ul>
+    <!-- LAND AREA SELECT -->
+    <li id="land-area-menu">
+      <span class="subheader">Land Areas</span>
 
-  <div class="main-stuff">
+      <div class="select-wrapper">
+        <select id="area"><!-- class="browser-default" -->
+          <!--<option value="" disabled selected>Choose your area</option>-->
+          <option value="101">East Anglia</option>
+          <option value="102">South Wales</option>
+        </select>
+        <label>Choose your area:</label>
+      </div>
+    </li>
 
-    <div class="row">
-      <div class="col s4">
+    <li><div class="divider"></div></li>
 
-        <div class="card panel">
-          <div class="card-content">
-            <span class="card-title">Land Areas</span>
-            <div class="row">
-              <div class="input-field col s12">
-                <select id="area"><!-- class="browser-default" -->
-                  <option value="" disabled selected>Choose your area</option>
-                  <option value="101">East Anglia</option>
-                  <option value="102">South Wales</option>
-                </select>
-                <label>Choose your area:</label>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- CROP AREAS -->
+    <li id="crop-area-menu">
+      <span class="subheader">Crop Areas</span>
+    </li>
 
-        <div id="crops" class="card panel"><!-- green lighten-4"-->
-          <div class="card-content">
-            <div class="section">
-              <div class="row">
-                <span class="card-title">Crop Areas</span>
-                <div class="divider"></div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Wheat</p></span>
+      <input id="wheat" type="number" value="300.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Wheat</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="wheat" type="number" value="300.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Barley</p></span>
+      <input id="barley" type="number" value="400.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Barley</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="barley" type="number" value="400.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Oats</p></span>
+      <input id="oats" type="number" value="100.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Oats</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="oats" type="number" value="100.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Oilseed Rape</p></span>
+      <input id="oilseed" type="number" value="600.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Oilseed Rape</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="oilseed" type="number" value="600.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Vegetables</p></span>
+      <input id="vegetables" type="number" value="500.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Vegetables</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="vegetables" type="number" value="500.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Livestock Grazing</p></span>
+      <input id="livestock" type="number" value="400.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Livestock Grazing</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="livestock" type="number" value="400.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Maize</p></span>
+      <input id="maize" type="number" value="200.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Maize</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="maize" type="number" value="200.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Beans</p></span>
+      <input id="beans" type="number" value="200.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Beans</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="beans" type="number" value="200.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Potatoes</p></span>
+      <input id="potatoes" type="number" value="800.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Potatoes</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="potatoes" type="number" value="800.0" step=".5">
-                </div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Onion</p></span>
+      <input id="onion" type="number" value="800.0" step=".5">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="cropname"><p>Onion</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="onion" type="number" value="800.0" step=".5">
-                </div>
-              </div>
+    <li><div class="divider"></div></li>
 
-            </div>
-          </div>
-        </div>
+    <!-- LIVESTOCK NUMBERS -->
+    <li id="livestock-numbers-menu">
+      <span class="subheader">Livestock Numbers</span>
+    </li>
 
-        <div id="livestock" class="card panel"><!--  brown lighten-4"-->
-          <div class="card-content">
-            <div class="section">
-              <div class="row">
-                <span class="card-title">Livestock Numbers</span>
-                <div class="divider"></div>
-              </div>
+    <li class="variable-row">
+      <span class="variable"><p>Cows</p></span>
+      <input id="cows" type="number" value="1000" step="10">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="livestockname"><p>Cows</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="cows" type="number" value="1000" step="10">
-                </div>
-              </div>
+    <li class="variable-row">
+        <span class="variable"><p>Sheep</p></span>
+        <input id="sheep" type="number" value="2000" step="10">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="livestockname"><p>Sheep</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="sheep" type="number" value="2000" step="10">
-                </div>
-              </div>
+    <li class="variable-row">
+        <span class="variable"><p>Chickens</p></span>
+        <input id="chickens" type="number" value="3000" step="10">
+    </li>
 
-              <div class="row">
-                <div class="col s6">
-                  <span class="livestockname"><p>Chickens</p></span>
-                </div>
-                <div class="col s6">
-                  <input id="chickens" type="number" value="3000" step="10">
-                </div>
-              </div>
+    <!-- Dummy list element to address
+     https://github.com/Dogfalo/materialize/issues/2112 -->
+    <li class="dummy"></li>
 
-            </div>
+  </ul>
+</aside>
+
+<!-- MAIN PAGE CONTENT -->
+<main class="container">
+
+  <h1 id="area-header">East Anglia</h1>
+
+
+<!-- VISUALISATION CONTAINER -->
+  <div class="row visualisation-content">
+    <div class="col s12">
+      <div class="card panel">
+        <div class="card-content">
+          <span class="card-title">Percentage Change from "Business-as-usual"</span>
+          <div class="chart-panel">
+            <canvas id="percentage-chart" width="100%"></canvas>
           </div>
         </div>
       </div>
-
-
-      <div class="col s8">
-        <div class="card panel">
-          <div class="card-content">
-            <span class="card-title">Percentage Change from "Business-as-usual"</span>
-            <div class="chart-panel">
-              <canvas id="percentage-chart" width="100%"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col s4">
-        <div class="card panel">
-          <div class="card-content">
-            <span class="card-title">Nutritional Delivery</span>
-            <div class="chart-panel">
-              <canvas id="nutrition-chart" height="500"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col s4">
-        <div class="card panel">
-          <div class="card-content">
-            <span class="card-title">Health Risks</span>
-            <div class="chart-panel">
-              <canvas id="health-chart" height="500"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
+    <div class="col s12 l6">
+      <div class="card panel">
+        <div class="card-content">
+          <span class="card-title">Nutritional Delivery</span>
+          <div class="chart-panel">
+            <canvas id="nutrition-chart" height="500"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col s12 l6">
+      <div class="card panel">
+        <div class="card-content">
+          <span class="card-title">Health Risks</span>
+          <div class="chart-panel">
+            <canvas id="health-chart" height="500"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+</main>
 
-  <footer class="page-footer white">
+<!-- FOOTER -->
+<footer class="page-footer white">
+  <div class="container logos">
+    <img class="logos" src="TGRAINS-institutions.svg">
+  </div>
+  <div class="footer-copyright green darken-4">
     <div class="container">
-      <div class="row">
-        <div class="col s12 m8 offset-m2 l6 offset-l3">
-          <p>
-            <img src="TGRAINS-institutions.svg">
-          </p>
-        </div>
-      </div>
+      © 2020 TGRAINS
     </div>
-    <div class="footer-copyright green darken-4">
-      <div class="container">
-        © 2020 TGRAINS
-      </div>
-    </div>
-  </footer>
+  </div>
+</footer>
 
-  <!-- Compiled and minified JavaScript -->
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chartjs-plugin-piechart-outlabels"></script>
+<!-- SCRIPTS -->
 
+<!-- Compiled and minified JavaScript -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chartjs-plugin-piechart-outlabels"></script>
 
-  <script type="text/javascript">
+<script type="text/javascript">
 
-    // Pretty
-    window.chartColors = [
-        'rgba( 31, 119, 180, 1)',  // blue
-        'rgba(255, 127,  14, 1)',  // orange
-        'rgba( 44, 160,  44, 1)',  // green
-        'rgba(214,  39,  40, 1)',  // red
-        'rgba(148, 103, 189, 1)',  // purple
-        'rgba(140,  86,  75, 1)',  // brown
-        'rgba(227, 119, 194, 1)',  // pink
-        'rgba(127, 127, 127, 1)',  // grey
-        'rgba(188, 189,  34, 1)',  // lime
-        'rgba( 23, 190, 207, 1)',  // turquoise
-    ];
+  // Pretty
+  window.chartColors = [
+      'rgba( 31, 119, 180, 1)',  // blue
+      'rgba(255, 127,  14, 1)',  // orange
+      'rgba( 44, 160,  44, 1)',  // green
+      'rgba(214,  39,  40, 1)',  // red
+      'rgba(148, 103, 189, 1)',  // purple
+      'rgba(140,  86,  75, 1)',  // brown
+      'rgba(227, 119, 194, 1)',  // pink
+      'rgba(127, 127, 127, 1)',  // grey
+      'rgba(188, 189,  34, 1)',  // lime
+      'rgba( 23, 190, 207, 1)',  // turquoise
+  ];
 
-    // Onload
-    document.addEventListener('DOMContentLoaded', function() {
-        var percentageChart = new Chart('percentage-chart', {
-            type: 'bar',
-            data: {
-                labels: ['GHG', 'Fertilizer leeching', 'Profit', 'Calorie Production'],
-                datasets: [{
-                    label: '% change from BAU state',
-                    data: [40, 20, -26, 47],
-                    backgroundColor: 'rgba(27, 94, 32, 0.2)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                legend: {
-                  display:false
-                },
-                scales: {
-                    yAxes: [{
-                        scaleLabel: {
-                            display:true,
-                            labelString: '% change from BAU state',
-                            fontSize: 14
-                        },
-                        type: 'linear',
-                        gridLines: {
-                            zeroLineWidth:.5,
-                            lineWidth:0
-                        }
-                    }],
-                    xAxes: [{
-                        position: 'top',
-                        offset: true,
-                        ticks: {
-                            beginAtZero: false,
-                            fontSize: 14
-                        },
-                        gridLines: {
-                            zeroLineWidth:.5,
-                            lineWidth:0
-                        }
-                    }]
-                }
-            }
-        });
+  // Onload
+  document.addEventListener('DOMContentLoaded', function() {
+      var percentageChart = new Chart('percentage-chart', {
+          type: 'bar',
+          data: {
+              labels: ['GHG', 'Fertilizer leeching', 'Profit', 'Calorie Production'],
+              datasets: [{
+                  label: '% change from BAU state',
+                  data: [40, 20, -26, 47],
+                  backgroundColor: 'rgba(27, 94, 32, 0.2)',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              legend: {
+                display:false
+              },
+              scales: {
+                  yAxes: [{
+                      scaleLabel: {
+                          display:true,
+                          labelString: '% change from BAU state',
+                          fontSize: 14
+                      },
+                      type: 'linear',
+                      gridLines: {
+                          zeroLineWidth:.5,
+                          lineWidth:0
+                      }
+                  }],
+                  xAxes: [{
+                      position: 'top',
+                      offset: true,
+                      ticks: {
+                          beginAtZero: false,
+                          fontSize: 14
+                      },
+                      gridLines: {
+                          zeroLineWidth:.5,
+                          lineWidth:0
+                      }
+                  }]
+              }
+          }
+      });
 
-        // document.getElementById('nutrition-chart').getContext('2d')
-        var nutritionChart = new Chart('nutrition-chart', {
-            type: 'outlabeledPie',
-            data: {
-                labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
-                    'Added Fats', 'Saturated Fats', 'Sugars', 'Animal Protein', 'Vegetable Protein'],
-                datasets: [{
-                    data: [12, 8, 33, 12, 10, 10, 5, 5, 3, 2],
-                    backgroundColor: window.chartColors,
-                    borderWidth: 1,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                    display: false
-                },
-                tooltips: {
-                    enabled: false
-                },
-                zoomOutPercentage: 0,
-                //rotation: .5* Math.PI,
-                plugins: {
-                    outlabels: {
-                        display:true,
-                        text: '%l\n%p',
-                        borderWidth: 0,
-                        lineWidth: 0,
-                        padding: 3,
-                        stretch: 20,
-                        //color: 'white',
-                        //backgroundColor: "",
-                        lineColor: "rgba(255, 255, 255, 0)",  // hide lines
-                        font: {
-                            size: 24,
-                            resizable: true,
-                            minSize: 12,
-                            maxSize: 18
-                        }
-                    }
-                }
-            }
-        });
+      // document.getElementById('nutrition-chart').getContext('2d')
+      var nutritionChart = new Chart('nutrition-chart', {
+          type: 'outlabeledPie',
+          data: {
+              labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
+                  'Added Fats', 'Saturated Fats', 'Sugars', 'Animal Protein', 'Vegetable Protein'],
+              datasets: [{
+                  data: [12, 8, 33, 12, 10, 10, 5, 5, 3, 2],
+                  backgroundColor: window.chartColors,
+                  borderWidth: 1,
+              }],
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              legend: {
+                  display: false
+              },
+              tooltips: {
+                  enabled: false
+              },
+              zoomOutPercentage: 0,
+              //rotation: .5* Math.PI,
+              plugins: {
+                  outlabels: {
+                      display:true,
+                      text: '%l\n%p',
+                      borderWidth: 0,
+                      lineWidth: 0,
+                      padding: 3,
+                      stretch: 20,
+                      //color: 'white',
+                      //backgroundColor: "",
+                      lineColor: "rgba(255, 255, 255, 0)",  // hide lines
+                      font: {
+                          size: 24,
+                          resizable: true,
+                          minSize: 12,
+                          maxSize: 18
+                      }
+                  }
+              }
+          }
+      });
 
 
-        var chart = new Chart('health-chart', {
-            type: 'outlabeledPie',
-            data: {
-                labels: ["Label 1", "Label 2"],
-                datasets: [{
-                    data: [12, 13],
-                    backgroundColor: [
-                        'rgba(17, 234, 175, 1)', // 1
-                        'rgba(251, 95, 98, 1)',  // 2
-                    ],
-                    borderWidth: 1,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutoutPercentage: 33.33,
-                rotation: Math.PI,
-                circumference: Math.PI,
-                zoomOutPercentage: 25,
-                tooltips: {
-                    enabled: false
-                },
-                plugins: {
-                    legend: false,
-                    title: false,
-                    outlabels: {
-                        display: true,
-                        text: "%l",
-                        color: "#000",
-                        borderWidth: 0,
-                        lineWidth: 0,
-                        padding: 3,
-                        textAlign: "right",
-                        stretch: 15,
-                        backgroundColor: "",
-                        lineColor: "rgba(255, 255, 255, 0)",
-                        font: {
-                            size: 24,
-                            resizable: true,
-                            minSize: 14,
-                            maxSize: 18
-                        }
-                    }
-                },
-                pieceLabel: {
-                    render: "percentage",
-                    fontColor: "black",
-                    fontSize: 14,
-                    precision: 0,
-                    showZero: true,
-                    overlap: false,
-                    position: "border"
-                },
-            }
-        });
-    });
-  </script>
+      var chart = new Chart('health-chart', {
+          type: 'outlabeledPie',
+          data: {
+              labels: ["Label 1", "Label 2"],
+              datasets: [{
+                  data: [12, 13],
+                  backgroundColor: [
+                      'rgba(17, 234, 175, 1)', // 1
+                      'rgba(251, 95, 98, 1)',  // 2
+                  ],
+                  borderWidth: 1,
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutoutPercentage: 33.33,
+              rotation: Math.PI,
+              circumference: Math.PI,
+              zoomOutPercentage: 25,
+              tooltips: {
+                  enabled: false
+              },
+              plugins: {
+                  legend: false,
+                  title: false,
+                  outlabels: {
+                      display: true,
+                      text: "%l",
+                      color: "#000",
+                      borderWidth: 0,
+                      lineWidth: 0,
+                      padding: 3,
+                      textAlign: "right",
+                      stretch: 15,
+                      backgroundColor: "",
+                      lineColor: "rgba(255, 255, 255, 0)",
+                      font: {
+                          size: 24,
+                          resizable: true,
+                          minSize: 14,
+                          maxSize: 18
+                      }
+                  }
+              },
+              pieceLabel: {
+                  render: "percentage",
+                  fontColor: "black",
+                  fontSize: 14,
+                  precision: 0,
+                  showZero: true,
+                  overlap: false,
+                  position: "border"
+              },
+          }
+      });
+  });
+</script>
 </body>
 </html>
