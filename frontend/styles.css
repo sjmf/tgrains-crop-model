@@ -85,16 +85,18 @@ a.sidenav-trigger {
     background-color:#fff;
 }
 
-span.variable {
+label.variable {
     display:inline-block;
     width:125px;
+    color: rgba(0,0,0, 0.87);
+    margin-left: 15px;
 }
 
 .select-wrapper + label {
     top:-10px;
 }
 
-span.variable + input[type="number"]:not(.browser-default) {
+label.variable + input[type="number"]:not(.browser-default) {
     width:125px;
 }
 

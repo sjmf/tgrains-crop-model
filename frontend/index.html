@@ -65,7 +65,7 @@
           <option value="101">East Anglia</option>
           <option value="102">South Wales</option>
         </select>
-        <label>Choose your area:</label>
+        <label for="area">Choose your area:</label>
       </div>
     </li>
 
@@ -77,52 +77,52 @@
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Wheat</p></span>
+      <label for="wheat" class="variable">Wheat</label>
       <input id="wheat" type="number" value="300.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Barley</p></span>
+      <label for="barley" class="variable">Barley</label>
       <input id="barley" type="number" value="400.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Oats</p></span>
+      <label for="oats" class="variable">Oats</label>
       <input id="oats" type="number" value="100.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Oilseed Rape</p></span>
+      <label for="oilseed" class="variable">Oilseed Rape</label>
       <input id="oilseed" type="number" value="600.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Vegetables</p></span>
+      <label for="vegetables" class="variable">Vegetables</label>
       <input id="vegetables" type="number" value="500.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Livestock Grazing</p></span>
+      <label for="livestock" class="variable">Livestock Grazing</label>
       <input id="livestock" type="number" value="400.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Maize</p></span>
+      <label for="maize" class="variable">Maize</label>
       <input id="maize" type="number" value="200.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Beans</p></span>
+      <label for="beans" class="variable">Beans</label>
       <input id="beans" type="number" value="200.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Potatoes</p></span>
+      <label for="potatoes" class="variable">Potatoes</label>
       <input id="potatoes" type="number" value="800.0" step=".5">
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Onion</p></span>
+      <label for="onion" class="variable">Onion</label>
       <input id="onion" type="number" value="800.0" step=".5">
     </li>
 
@@ -134,17 +134,17 @@
     </li>
 
     <li class="variable-row">
-      <span class="variable"><p>Cows</p></span>
+      <label for="cows" class="variable">Cows</label>
       <input id="cows" type="number" value="1000" step="10">
     </li>
 
     <li class="variable-row">
-        <span class="variable"><p>Sheep</p></span>
+        <label for="sheep" class="variable">Sheep</label>
         <input id="sheep" type="number" value="2000" step="10">
     </li>
 
     <li class="variable-row">
-        <span class="variable"><p>Chickens</p></span>
+        <label for="chickens" class="variable">Chickens</label>
         <input id="chickens" type="number" value="3000" step="10">
     </li>
 
@@ -202,7 +202,7 @@
 <!-- FOOTER -->
 <footer class="page-footer white">
   <div class="container logos">
-    <img class="logos" src="TGRAINS-institutions.svg">
+    <img alt="Project institution logos" class="logos" src="TGRAINS-institutions.svg">
   </div>
   <div class="footer-copyright green darken-4">
     <div class="container">
@@ -236,7 +236,7 @@
 
   // Onload
   document.addEventListener('DOMContentLoaded', function() {
-      var percentageChart = new Chart('percentage-chart', {
+      let percentageChart = new Chart('percentage-chart', {
           type: 'bar',
           data: {
               labels: ['GHG', 'Fertilizer leeching', 'Profit', 'Calorie Production'],
@@ -281,7 +281,7 @@
       });
 
       // document.getElementById('nutrition-chart').getContext('2d')
-      var nutritionChart = new Chart('nutrition-chart', {
+      let nutritionChart = new Chart('nutrition-chart', {
           type: 'outlabeledPie',
           data: {
               labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
@@ -326,7 +326,7 @@
       });
 
 
-      var chart = new Chart('health-chart', {
+      let chart = new Chart('health-chart', {
           type: 'outlabeledPie',
           data: {
               labels: ["Label 1", "Label 2"],
