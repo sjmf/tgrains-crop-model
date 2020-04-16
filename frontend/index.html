@@ -159,6 +159,7 @@
 <!-- MAIN PAGE CONTENT -->
 <main class="grey lighten-2">
 
+
   <div class="row white no-margin">
     <div class="col s12 green-text text-darken-4 ">
       <div class="container">
@@ -174,78 +175,79 @@
   <div class="row">
 
     <!-- TAB DECLARATIONS -->
-    <div class="col s12 no-padding">
-      <ul class="tabs">
-        <li class="tab col s6 l3"><a href="#production-tab" class="active">Production</a></li>
-        <li class="tab col s6 l3"><a href="#nutrition-tab">Nutrition</a></li>
-        <li class="tab col s6 l3"><a href="#health-tab">Health</a></li>
-        <li class="tab col s6 l3"><a href="#pesticides-tab">Pesticides</a></li>
-      </ul>
-    </div>
-
-    <!-- VISUALISATION CONTAINERS (TABBED) -->
-    <div id="production-tab" class="col s12">
-      <div class="card panel">
-        <div class="card-content">
-          <span class="card-title">Percentage Change from "Business-as-usual"</span>
-          <div class="chart-panel">
-            <canvas id="percentage-chart" height="100px" width="200px"></canvas>
-          </div>
-        </div>
+    <div class="col s12 no-padding white">
+      <div class="container">
+        <ul class="tabs">
+          <li class="tab col s6 l3"><a href="#production-tab" class="active">Production</a></li>
+          <li class="tab col s6 l3"><a href="#nutrition-tab">Nutrition</a></li>
+          <li class="tab col s6 l3"><a href="#health-tab">Health</a></li>
+          <li class="tab col s6 l3"><a href="#pesticides-tab">Pesticides</a></li>
+        </ul>
       </div>
     </div>
 
-    <div id="nutrition-tab" class="col s12">
-      <div class="row">
-        <div class="col s12 m6">
-          <div class="card panel">
-            <div class="card-content">
-              <span class="card-title">Nutritional Delivery</span>
-              <div class="chart-panel">
-                <canvas id="nutrition-chart" height="300" width="300"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col s12 m6">
-          <div class="card panel">
-            <div class="card-content">
-              <span class="card-title">% Change</span>
-              <div class="chart-panel">
-                <canvas id="nutrition-change-chart" width="100" height="100"></canvas>
-              </div>
+    <div class="container">
+      <!-- VISUALISATION CONTAINERS (TABBED) -->
+      <div id="production-tab" class="col s12">
+        <div class="card panel">
+          <div class="card-content">
+            <span class="card-title">Percentage Change from "Business-as-usual"</span>
+            <div class="chart-panel">
+              <canvas id="percentage-chart" height="100px" width="200px"></canvas>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div id="health-tab" class="col s12">
-      <div class="card panel">
-        <div class="card-content">
-          <span class="card-title">Health Risks</span>
-          <div class="chart-panel">
-            <canvas id="health-chart" height="100px" width="200px"></canvas>
+      <div id="nutrition-tab" class="col s12">
+        <div class="row">
+          <div class="col s12 m6">
+            <div class="card panel">
+              <div class="card-content">
+                <span class="card-title">Nutritional Delivery</span>
+                <div class="chart-panel">
+                  <canvas id="nutrition-chart" height="300" width="300"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col s12 m6">
+            <div class="card panel">
+              <div class="card-content">
+                <span class="card-title">% Change</span>
+                <div class="chart-panel">
+                  <canvas id="nutrition-change-chart" width="100" height="100"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="health-tab" class="col s12">
+        <div class="card panel">
+          <div class="card-content">
+            <span class="card-title">Health Risks</span>
+            <div class="chart-panel">
+              <canvas id="health-chart" height="100px" width="200px"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pesticides-tab" class="col s12">
+        <div class="card panel">
+          <div class="card-content">
+            <span class="card-title">Pesticide Impacts</span>
+            <div class="chart-panel">
+              <canvas id="pesticides-chart" height="100px" width="200px"></canvas>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <div id="pesticides-tab" class="col s12">
-      <div class="card panel">
-        <div class="card-content">
-          <span class="card-title">Pesticide Impacts</span>
-          <div class="chart-panel">
-            <canvas id="pesticides-chart" height="100px" width="200px"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
-
-</div>
 
 </main>
 
@@ -373,7 +375,7 @@
               tooltips: {
                   enabled: false
               },
-              zoomOutPercentage: 60,
+              zoomOutPercentage: 50,
               //rotation: .5* Math.PI,
               plugins: {
                   outlabels: {
@@ -386,14 +388,14 @@
                       //color: 'white',
                       //backgroundColor: "",
                       //lineColor: "rgba(255, 255, 255, 0)",  // hide lines
-                      font: {
-                          size: 24,
-                          resizable: true,
-                          minSize: 12,
-                          maxSize: 18
-                      }
                   }
-              }
+              },
+              // font: {
+              //     size:16,
+              //     resizable: true,
+              //     minSize: 12,
+              //     maxSize: 18
+              // }
           }
       });
 
@@ -555,6 +557,8 @@
   selectElement.addEventListener('change', (event) => {
       document.querySelector('h1#area-header').textContent = `${event.target[event.target.selectedIndex].label}`;
   });
+
+
 </script>
 </body>
 </html>
