@@ -300,11 +300,11 @@
       'rgba( 23, 190, 207, .3)',  // turquoise
   ];
 
-  let bauChangeChart, healthChart, nutritionChart, nutritionChangeChart, pesticidesChart;
+  let charts = {};
 
   // Onload
   document.addEventListener('DOMContentLoaded', function() {
-      bauChangeChart = new Chart('percentage-chart', {
+      charts.bauChangeChart = new Chart('percentage-chart', {
           type: 'bar',
           data: {
               labels: ['GHG', 'Fertilizer leeching', 'Profit', 'Calorie Production'],
@@ -355,7 +355,7 @@
       });
 
 
-      nutritionChart = new Chart('nutrition-chart', {
+      charts.nutritionChart = new Chart('nutrition-chart', {
           type: 'outlabeledPie',
           data: {
               labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
@@ -400,7 +400,7 @@
       });
 
 
-      nutritionChangeChart = new Chart('nutrition-change-chart', {
+      charts.nutritionChangeChart = new Chart('nutrition-change-chart', {
           type: 'bar',
           data: {
               labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
@@ -450,7 +450,7 @@
       });
 
 
-      healthChart = new Chart('health-chart', {
+      charts.healthChart = new Chart('health-chart', {
           type: 'bar',
           data: {
               labels: ['Stroke', 'Cancer', 'Heart Disease', 'Diabetes'],
@@ -501,7 +501,7 @@
       });
 
 
-      pesticidesChart = new Chart('pesticides-chart', {
+      charts.pesticidesChart = new Chart('pesticides-chart', {
           type: 'bar',
           data: {
               labels: ['Ground Water', 'Fish', 'Birds', 'Bees', 'Beneficial Arthropods'],
@@ -552,12 +552,35 @@
       });
   });
 
-  // Demo-only label change
+
+  // Demo-only on-change handlers (modify values with random data)
+  const randomiseData = function() {
+      for (const key in charts) {
+          let chart = charts[key];
+          let positive = (chart.config.type == 'outlabeledPie');
+          chart.data.datasets.forEach(function(dataset) {
+              dataset.data = dataset.data.map(function(d) {
+                  let v = d + Math.floor(5 - Math.random() * 10);
+                  return positive ? Math.abs(v) : v;
+              });
+          });
+          chart.update();
+      }
+  }
+
   const selectElement = document.querySelector('#area');
   selectElement.addEventListener('change', (event) => {
       document.querySelector('h1#area-header').textContent = `${event.target[event.target.selectedIndex].label}`;
+      randomiseData();
   });
 
+  const inputBoxes = document.querySelectorAll('.variable-row > input');
+  console.log(inputBoxes);
+  inputBoxes.forEach((input) => {
+      input.addEventListener('change', (event) => {
+          randomiseData();  // Add or subtract random amounts from data in all graphs
+      });
+  });
 
 </script>
 </body>
