@@ -36,7 +36,7 @@
   <!-- G analytics here -->
 </head>
 
-<body class="grey lighten-2">
+<body>
 
 <header>
 <!-- TOP NAVBAR -->
@@ -44,7 +44,7 @@
     <div class="row nav-wrapper green darken-4">
       <div class="col s12">
         <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-        <a href="#" class="brand-logo"><i class="material-icons">terrain</i>TGRAINS <span class="hide-on-small-only">Crop Model</span></a>
+        <a href="#" class="brand-logo truncate"><i class="material-icons">terrain</i>TGRAINS <span class="hide-on-small-only">Crop Model</span></a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
           <li><a href="https://tgrains.com">TGRAINS Website</a></li>
         </ul>
@@ -157,57 +157,95 @@
 </aside>
 
 <!-- MAIN PAGE CONTENT -->
-<main class="container">
+<main class="grey lighten-2">
 
-  <h1 id="area-header">East Anglia</h1>
+  <div class="row white no-margin">
+    <div class="col s12 green-text text-darken-4 ">
+      <div class="container">
+        <p class="h1-label">Selected area:</p>
+        <h1 id="area-header">East Anglia</h1>
+        <p class="hide-on-large-only">Swipe right or click the menu button to show options!</p>
+        <div class="divider"></div>
+      </div>
+    </div>
+  </div>
 
 
-<!-- VISUALISATION CONTAINER -->
-  <div class="row visualisation-content">
-    <div class="col s12">
+  <div class="row">
+
+    <!-- TAB DECLARATIONS -->
+    <div class="col s12 no-padding">
+      <ul class="tabs">
+        <li class="tab col s6 l3"><a href="#production-tab" class="active">Production</a></li>
+        <li class="tab col s6 l3"><a href="#nutrition-tab">Nutrition</a></li>
+        <li class="tab col s6 l3"><a href="#health-tab">Health</a></li>
+        <li class="tab col s6 l3"><a href="#pesticides-tab">Pesticides</a></li>
+      </ul>
+    </div>
+
+    <!-- VISUALISATION CONTAINERS (TABBED) -->
+    <div id="production-tab" class="col s12">
       <div class="card panel">
         <div class="card-content">
           <span class="card-title">Percentage Change from "Business-as-usual"</span>
           <div class="chart-panel">
-            <canvas id="percentage-chart" width="100%"></canvas>
+            <canvas id="percentage-chart" height="100px" width="200px"></canvas>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col s12 l6">
-      <div class="card panel">
-        <div class="card-content">
-          <span class="card-title">Nutritional Delivery</span>
-          <div class="chart-panel">
-            <canvas id="nutrition-chart" height="500"></canvas>
+    <div id="nutrition-tab" class="col s12">
+      <div class="row">
+        <div class="col s12 m6">
+          <div class="card panel">
+            <div class="card-content">
+              <span class="card-title">Nutritional Delivery</span>
+              <div class="chart-panel">
+                <canvas id="nutrition-chart" height="300" width="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m6">
+          <div class="card panel">
+            <div class="card-content">
+              <span class="card-title">% Change</span>
+              <div class="chart-panel">
+                <canvas id="nutrition-change-chart" width="100" height="100"></canvas>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col s12 l6">
+    <div id="health-tab" class="col s12">
       <div class="card panel">
         <div class="card-content">
           <span class="card-title">Health Risks</span>
           <div class="chart-panel">
-            <canvas id="health-chart" height="400"></canvas>
+            <canvas id="health-chart" height="100px" width="200px"></canvas>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col s12 l6">
+    <div id="pesticides-tab" class="col s12">
       <div class="card panel">
         <div class="card-content">
           <span class="card-title">Pesticide Impacts</span>
           <div class="chart-panel">
-            <canvas id="pesticides-chart" height="300"></canvas>
+            <canvas id="pesticides-chart" height="100px" width="200px"></canvas>
           </div>
         </div>
       </div>
     </div>
+
   </div>
+
+</div>
 
 </main>
 
@@ -232,8 +270,9 @@
 
 <script type="text/javascript">
 
-  // Pretty
-  window.chartColors = [
+  // Use TAB10 colors for charts to aid colorblind use
+  window.chartColors = Object();
+  window.chartColors.opaque = [
       'rgba( 31, 119, 180, 1)',  // blue
       'rgba(255, 127,  14, 1)',  // orange
       'rgba( 44, 160,  44, 1)',  // green
@@ -246,20 +285,37 @@
       'rgba( 23, 190, 207, 1)',  // turquoise
   ];
 
+  window.chartColors.translucent = [
+      'rgba( 31, 119, 180, .3)',  // blue
+      'rgba(255, 127,  14, .3)',  // orange
+      'rgba( 44, 160,  44, .3)',  // green
+      'rgba(214,  39,  40, .3)',  // red
+      'rgba(148, 103, 189, .3)',  // purple
+      'rgba(140,  86,  75, .3)',  // brown
+      'rgba(227, 119, 194, .3)',  // pink
+      'rgba(127, 127, 127, .3)',  // grey
+      'rgba(188, 189,  34, .3)',  // lime
+      'rgba( 23, 190, 207, .3)',  // turquoise
+  ];
+
+  let bauChangeChart, healthChart, nutritionChart, nutritionChangeChart, pesticidesChart;
+
   // Onload
   document.addEventListener('DOMContentLoaded', function() {
-      const bauChangeChart = new Chart('percentage-chart', {
+      bauChangeChart = new Chart('percentage-chart', {
           type: 'bar',
           data: {
               labels: ['GHG', 'Fertilizer leeching', 'Profit', 'Calorie Production'],
               datasets: [{
                   label: '% change from BAU state',
-                  data: [40, 20, -26, 47],
-                  backgroundColor: 'rgba(27, 94, 32, 0.2)',
+                  data: [40, 20, -26, 17],
+                  backgroundColor: window.chartColors.translucent[2],
                   borderWidth: 1
               }]
           },
           options: {
+              responsive: true,
+              maintainAspectRatio: true,
               legend: {
                   display: false
               },
@@ -269,6 +325,10 @@
                           display: true,
                           labelString: '% change from BAU state',
                           fontSize: 14
+                      },
+                      ticks: {
+                          suggestedMax: 50,
+                          suggestedMin: -50,
                       },
                       type: 'linear',
                       gridLines: {
@@ -293,27 +353,27 @@
       });
 
 
-      const nutritionChart = new Chart('nutrition-chart', {
+      nutritionChart = new Chart('nutrition-chart', {
           type: 'outlabeledPie',
           data: {
               labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
                   'Added Fats', 'Saturated Fats', 'Sugars', 'Animal Protein', 'Vegetable Protein'],
               datasets: [{
                   data: [12, 8, 33, 12, 10, 10, 5, 5, 3, 2],
-                  backgroundColor: window.chartColors,
+                  backgroundColor: window.chartColors.opaque,
                   borderWidth: 1,
               }],
           },
           options: {
-              responsive: true,
-              maintainAspectRatio: false,
+              responsive: true,          // Changed as responsive doesn't work properly with tabs (display:none)
+              maintainAspectRatio: true,  //
               legend: {
                   display: false
               },
               tooltips: {
                   enabled: false
               },
-              zoomOutPercentage: 0,
+              zoomOutPercentage: 60,
               //rotation: .5* Math.PI,
               plugins: {
                   outlabels: {
@@ -325,7 +385,7 @@
                       stretch: 20,
                       //color: 'white',
                       //backgroundColor: "",
-                      lineColor: "rgba(255, 255, 255, 0)",  // hide lines
+                      //lineColor: "rgba(255, 255, 255, 0)",  // hide lines
                       font: {
                           size: 24,
                           resizable: true,
@@ -338,14 +398,15 @@
       });
 
 
-      const healthChart = new Chart('health-chart', {
+      nutritionChangeChart = new Chart('nutrition-change-chart', {
           type: 'bar',
           data: {
-              labels: ['Stroke', 'Cancer', 'Heart Disease', 'Diabetes'],
+              labels: ['Whole Grains', 'Tubers', 'Vegetables', 'Fruits', 'Dairy',
+                  'Added Fats', 'Saturated Fats', 'Sugars', 'Animal Protein', 'Vegetable Protein'],
               datasets: [{
-                  label: '% change from BAU state',
-                  data: [40, 20, -26, 47],
-                  backgroundColor: 'rgba(94, 27, 32, 0.2)',
+                  data: [-6, 14, -2, 3, 10, 4, -5, -4, 4, 2],
+                  backgroundColor: window.chartColors.translucent,
+                  //backgroundColor: 'rgba(27, 94, 32, 0.2)',
                   borderWidth: 1
               }]
           },
@@ -359,6 +420,10 @@
                           display: true,
                           labelString: '% change from BAU state',
                           fontSize: 14
+                      },
+                      ticks: {
+                          suggestedMax: 20,
+                          suggestedMin: -20,
                       },
                       type: 'linear',
                       gridLines: {
@@ -383,18 +448,20 @@
       });
 
 
-      const pesticidesChart = new Chart('pesticides-chart', {
+      healthChart = new Chart('health-chart', {
           type: 'bar',
           data: {
-              labels: ['Ground Water', 'Fish', 'Birds', 'Bees', 'Beneficial Arthropods'],
+              labels: ['Stroke', 'Cancer', 'Heart Disease', 'Diabetes'],
               datasets: [{
                   label: '% change from BAU state',
-                  data: [40, 20, -26, 47, 18],
-                  backgroundColor: 'rgba(27, 32, 94, 0.2)',
+                  data: [ 20, -26, 17, 40],
+                  backgroundColor: window.chartColors.translucent[3],
                   borderWidth: 1
               }]
           },
           options: {
+              responsive: true,
+              maintainAspectRatio: true,
               legend: {
                   display: false
               },
@@ -404,6 +471,61 @@
                           display: true,
                           labelString: '% change from BAU state',
                           fontSize: 14
+                      },
+                      ticks: {
+                          suggestedMax: 50,
+                          suggestedMin: -50,
+                      },
+                      type: 'linear',
+                      gridLines: {
+                          zeroLineWidth: .5,
+                          lineWidth: 0
+                      }
+                  }],
+                  xAxes: [{
+                      position: 'top',
+                      offset: true,
+                      ticks: {
+                          beginAtZero: false,
+                          fontSize: 14
+                      },
+                      gridLines: {
+                          zeroLineWidth: .5,
+                          lineWidth: 0
+                      }
+                  }]
+              }
+          }
+      });
+
+
+      pesticidesChart = new Chart('pesticides-chart', {
+          type: 'bar',
+          data: {
+              labels: ['Ground Water', 'Fish', 'Birds', 'Bees', 'Beneficial Arthropods'],
+              datasets: [{
+                  label: '% change from BAU state',
+                  data: [30, 20, -26, 17, -8],
+                  backgroundColor: window.chartColors.translucent[4],
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              legend: {
+                  display: false
+              },
+              scales: {
+                  yAxes: [{
+                      scaleLabel: {
+                          display: true,
+                          labelString: '% change from BAU state',
+                          fontSize: 14
+                      },
+                      ticks: {
+                          suggestedMax: 50,
+                          suggestedMin: -50,
                       },
                       type: 'linear',
                       gridLines: {
