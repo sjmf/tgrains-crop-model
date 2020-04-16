@@ -6,7 +6,7 @@
   <meta charset="utf-8">
 
   <!--Let browser know website is optimized for mobile-->
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
 
   <title>TGRAINS Crop Model</title>
   <meta name="description" content="TGRAINS Crop Model Visualisation">
@@ -22,12 +22,13 @@
   <!-- Scripts -->
   <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', function() {
-          /*var elems = document.querySelectorAll('select');
-          var instances = M.FormSelect.init(elems, {});
+          // How to init MaterializeCSS elements individually:
+          /*
+          M.FormSelect.init(document.querySelectorAll('select'), {});
+          M.Sidenav.init(document.querySelectorAll('.sidenav'), {});
+          */
 
-          var elems = document.querySelectorAll('.sidenav');
-          var instances = M.Sidenav.init(elems, {});*/
-
+          // Do this instead:
           M.AutoInit();
       });
   </script>
@@ -190,7 +191,18 @@
         <div class="card-content">
           <span class="card-title">Health Risks</span>
           <div class="chart-panel">
-            <canvas id="health-chart" height="500"></canvas>
+            <canvas id="health-chart" height="400"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col s12 l6">
+      <div class="card panel">
+        <div class="card-content">
+          <span class="card-title">Pesticide Impacts</span>
+          <div class="chart-panel">
+            <canvas id="pesticides-chart" height="300"></canvas>
           </div>
         </div>
       </div>
@@ -234,15 +246,9 @@
       'rgba( 23, 190, 207, 1)',  // turquoise
   ];
 
-  // Demo-only label change
-  const selectElement = document.querySelector('#area');
-  selectElement.addEventListener('change', (event) => {
-      document.querySelector('h1#area-header').textContent = `${event.target[event.target.selectedIndex].label}`;
-  });
-
   // Onload
   document.addEventListener('DOMContentLoaded', function() {
-      const percentageChart = new Chart('percentage-chart', {
+      const bauChangeChart = new Chart('percentage-chart', {
           type: 'bar',
           data: {
               labels: ['GHG', 'Fertilizer leeching', 'Profit', 'Calorie Production'],
@@ -255,19 +261,19 @@
           },
           options: {
               legend: {
-                display:false
+                  display: false
               },
               scales: {
                   yAxes: [{
                       scaleLabel: {
-                          display:true,
+                          display: true,
                           labelString: '% change from BAU state',
                           fontSize: 14
                       },
                       type: 'linear',
                       gridLines: {
-                          zeroLineWidth:.5,
-                          lineWidth:0
+                          zeroLineWidth: .5,
+                          lineWidth: 0
                       }
                   }],
                   xAxes: [{
@@ -278,15 +284,15 @@
                           fontSize: 14
                       },
                       gridLines: {
-                          zeroLineWidth:.5,
-                          lineWidth:0
+                          zeroLineWidth: .5,
+                          lineWidth: 0
                       }
                   }]
               }
           }
       });
 
-      // document.getElementById('nutrition-chart').getContext('2d')
+
       const nutritionChart = new Chart('nutrition-chart', {
           type: 'outlabeledPie',
           data: {
@@ -311,7 +317,7 @@
               //rotation: .5* Math.PI,
               plugins: {
                   outlabels: {
-                      display:true,
+                      display: true,
                       text: '%l\n%p',
                       borderWidth: 0,
                       lineWidth: 0,
@@ -332,62 +338,100 @@
       });
 
 
-      const chart = new Chart('health-chart', {
-          type: 'outlabeledPie',
+      const healthChart = new Chart('health-chart', {
+          type: 'bar',
           data: {
-              labels: ["Label 1", "Label 2"],
+              labels: ['Stroke', 'Cancer', 'Heart Disease', 'Diabetes'],
               datasets: [{
-                  data: [12, 13],
-                  backgroundColor: [
-                      'rgba(17, 234, 175, 1)', // 1
-                      'rgba(251, 95, 98, 1)',  // 2
-                  ],
-                  borderWidth: 1,
+                  label: '% change from BAU state',
+                  data: [40, 20, -26, 47],
+                  backgroundColor: 'rgba(94, 27, 32, 0.2)',
+                  borderWidth: 1
               }]
           },
           options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutoutPercentage: 33.33,
-              rotation: Math.PI,
-              circumference: Math.PI,
-              zoomOutPercentage: 25,
-              tooltips: {
-                  enabled: false
+              legend: {
+                  display: false
               },
-              plugins: {
-                  legend: false,
-                  title: false,
-                  outlabels: {
-                      display: true,
-                      text: "%l",
-                      color: "#000",
-                      borderWidth: 0,
-                      lineWidth: 0,
-                      padding: 3,
-                      textAlign: "right",
-                      stretch: 15,
-                      backgroundColor: "",
-                      lineColor: "rgba(255, 255, 255, 0)",
-                      font: {
-                          size: 24,
-                          resizable: true,
-                          minSize: 14,
-                          maxSize: 18
+              scales: {
+                  yAxes: [{
+                      scaleLabel: {
+                          display: true,
+                          labelString: '% change from BAU state',
+                          fontSize: 14
+                      },
+                      type: 'linear',
+                      gridLines: {
+                          zeroLineWidth: .5,
+                          lineWidth: 0
                       }
-                  }
-              },
-              pieceLabel: {
-                  render: "percentage",
-                  fontColor: "black",
-                  fontSize: 14,
-                  precision: 0,
-                  showZero: true,
-                  overlap: false,
-                  position: "border"
-              },
+                  }],
+                  xAxes: [{
+                      position: 'top',
+                      offset: true,
+                      ticks: {
+                          beginAtZero: false,
+                          fontSize: 14
+                      },
+                      gridLines: {
+                          zeroLineWidth: .5,
+                          lineWidth: 0
+                      }
+                  }]
+              }
           }
       });
+
+
+      const pesticidesChart = new Chart('pesticides-chart', {
+          type: 'bar',
+          data: {
+              labels: ['Ground Water', 'Fish', 'Birds', 'Bees', 'Beneficial Arthropods'],
+              datasets: [{
+                  label: '% change from BAU state',
+                  data: [40, 20, -26, 47, 18],
+                  backgroundColor: 'rgba(27, 32, 94, 0.2)',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              legend: {
+                  display: false
+              },
+              scales: {
+                  yAxes: [{
+                      scaleLabel: {
+                          display: true,
+                          labelString: '% change from BAU state',
+                          fontSize: 14
+                      },
+                      type: 'linear',
+                      gridLines: {
+                          zeroLineWidth: .5,
+                          lineWidth: 0
+                      }
+                  }],
+                  xAxes: [{
+                      position: 'top',
+                      offset: true,
+                      ticks: {
+                          beginAtZero: false,
+                          fontSize: 14
+                      },
+                      gridLines: {
+                          zeroLineWidth: .5,
+                          lineWidth: 0
+                      }
+                  }]
+              }
+          }
+      });
+  });
+
+  // Demo-only label change
+  const selectElement = document.querySelector('#area');
+  selectElement.addEventListener('change', (event) => {
+      document.querySelector('h1#area-header').textContent = `${event.target[event.target.selectedIndex].label}`;
   });
 </script>
 </body>
