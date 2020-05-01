@@ -6,6 +6,11 @@ body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
+
+    /* min width */
+    min-width:360px;
+    width: auto !important;
+    width:360px;
 }
 
 main {
@@ -20,6 +25,13 @@ nav {
 main {
     padding-top: 65px;
 }
+
+@media only screen and (max-width:600px) {
+    main {
+        padding-top: 56px;
+    }
+}
+
 
 /* header, footer positioning (responsive) */
 
@@ -54,7 +66,7 @@ main, footer {
 
 /* Sidenav */
 
-@media only screen and (min-width : 992px) {
+@media only screen and (min-width : 993px) {
     .sidenav {
         top: 65px;
         height: 100%;
@@ -150,4 +162,55 @@ img.logos {
 
 .h1-label {
     margin-bottom: -35px;
+}
+
+
+/* Element tweaks */
+
+@media only screen and (max-width:992px) {
+    #area-header {
+        font-size: 2.4rem;
+        font-weight: bold;
+        margin: 3.2rem 0 2rem 0;
+    }
+}
+
+@media only screen and (max-width:600px) {
+    #area-header {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin: 1.5rem 0 1rem 0;
+    }
+}
+
+@media only screen and (max-width:600px) {
+    .card span.card-title {
+        font-size:16px;
+    }
+}
+
+.compare-buttons div {
+    text-align: right;
+    line-height: 45px;
+}
+
+.comment-card a.btn {
+    display: inline-block;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.comment-card,
+.comment-card div.row:last-child,
+.comment-form,
+.comment-form div.col:last-child p {
+    margin-bottom: 0px;
+}
+
+.comment-header {
+    font-size: 2.4rem;
+}
+
+#modal-add-comment .btn {
+    width:100%;
 }

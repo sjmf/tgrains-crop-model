@@ -18,6 +18,7 @@
   <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="lozenge.css">
 
   <!-- Scripts -->
   <script type="text/javascript">
@@ -163,9 +164,9 @@
   <div class="row white no-margin">
     <div class="col s12 green-text text-darken-4 ">
       <div class="container">
-        <p class="h1-label">Selected area:</p>
+        <p class="h1-label hide-on-small-only">Selected area:</p>
         <h1 id="area-header">East Anglia</h1>
-        <p class="hide-on-large-only">Swipe right or click the menu button to show options!</p>
+<!--        <p class="hide-on-large-only">Swipe right or click the menu button to show options!</p> -->
         <div class="divider"></div>
       </div>
     </div>
@@ -186,12 +187,12 @@
       </div>
     </div>
 
+    <!-- VISUALISATION CONTAINERS (TABBED) -->
     <div class="container">
-      <!-- VISUALISATION CONTAINERS (TABBED) -->
       <div id="production-tab" class="col s12">
         <div class="card panel">
           <div class="card-content">
-            <span class="card-title">Percentage Change from "Business-as-usual"</span>
+            <span class="card-title">Change from "Business-as-usual"</span>
             <div class="chart-panel">
               <canvas id="percentage-chart" height="100px" width="200px"></canvas>
             </div>
@@ -246,6 +247,478 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="container col s12">
+      <br><br>
+    </div>
+    <!-- COMMENTS CONTAINER -->
+    <div id="comments" class="container">
+      <div class="col s11">
+        <span class="comment-header grey-text text-darken-2">Comments</span>
+        <div class="divider grey"></div>
+
+      </div>
+      <div class="col s1">
+        <a href="#modal-add-comment" class="modal-trigger btn-floating btn-large tooltipped right waves-effect waves-light green darken-2" data-position="left" data-tooltip="Add Comment">
+          <i class="material-icons">add</i>
+        </a>
+      </div>
+
+      <div class="col s12 m6 offset-m4">
+        <ul class="pagination">
+          <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+          <li class="active"><a href="#!">1</a></li>
+          <li class="waves-effect"><a href="#!">2</a></li>
+          <li class="waves-effect"><a href="#!">3</a></li>
+          <li class="waves-effect"><a href="#!">4</a></li>
+          <li class="waves-effect"><a href="#!">5</a></li>
+          <li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+        </ul>
+      </div>
+
+      <div class="col s12 m10 offset-m1 l8 offset-l2">
+        <div class="comment-card card-panel grey lighten-5 z-depth-1">
+          <div class="row">
+            <div class="col s4 m2">
+              <img src="images/samantha_128.jpg" alt="avatar" class="circle responsive-img valign">
+            </div>
+
+            <div class="col s8 m10">
+              <div class="row">
+                <div class="col s12 m6">
+                  <span class="username grey-text">
+                    <a href="https://twitter.com/SamMFinnigan">Samantha Finnigan</a>
+                  </span>
+                </div>
+                <div class="col s12 m6 right-align">
+                  <span class="timestamp grey-text">
+                    Tues 28th April 2020 16:11
+                  </span>
+                </div>
+
+              </div>
+
+              <div class="row">
+                <div class="col s12">
+                  <span class="black-text">
+                    This is a comment. It is a sample comment demonstrating the social functionality of the TGRAINS
+                    scaled-up model prototype. Comment input is taken from the user, who may wish to link their social
+                    media accounts using the inbuilt functionality. Comments can also be tagged with features displayed
+                    in the model interface, and a set of pre-defined tags from the 2019 Workshop themes.
+                  </span>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col s2">
+                  <span class="grey-text">Tags:</span>
+                </div>
+                <div class="col s10">
+                  <span class="new badge blue lighten-2" data-badge-caption="small business"></span>
+                  <span class="new badge brown lighten-2" data-badge-caption="oats"></span>
+                  <span class="new badge green lighten-2" data-badge-caption="greenhouse gas"></span>
+                  <span class="new badge purple lighten-2" data-badge-caption="pesticides"></span>
+                  <span class="new badge red lighten-2" data-badge-caption="cancer"></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col s10 offset-s2 divider"></div>
+          </div>
+
+          <div class="row compare-buttons">
+
+            <div class="col s10 m2 offset-m4 offset-l6 l2">
+              <span class="grey-text">Compare</span>
+            </div>
+            <div class="col s2 m2 l1">
+              <a class="btn-floating btn waves-effect waves-light amber darken-2">
+                <i class="material-icons">insert_chart</i>
+              </a>
+            </div>
+
+            <div class="col s10 m2 l2">
+              <span class="grey-text">Load</span>
+            </div>
+            <div class="col s2 m2 l1">
+              <a class="btn-floating btn waves-effect waves-light blue darken-2">
+                <i class="material-icons">play_arrow</i>
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Modal Trigger -->
+
+        <!-- Modal Structure -->
+        <div id="modal-add-comment" class="modal">
+          <div class="modal-content container">
+            <div class="socialmedia-login">
+              <div class="row">
+                <div class="col s12">
+                  <h4>Add Comment</h4>
+                  <p>Connect your Social Media account to post a comment:</p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col s12 m8 offset-m2">
+                  <a class="btn waves-effect waves-light blue">
+                    <i class="material-icons">verified_user</i> Sign in with Twitter
+                  </a>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col s12 m8 offset-m2">
+                  <a class="btn waves-effect waves-light blue darken-3">
+                    <i class="material-icons">verified_user</i> Sign in with Facebook
+                  </a>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col s12 m8 offset-m2">
+                  <a class="btn waves-effect waves-light amber darken-2">
+                    <i class="material-icons">verified_user</i> Sign in with Google
+                  </a>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col s12 m8 offset-m2">
+                  <a href="#" onclick="toggleCommentForm();" class="btn waves-effect waves-light white grey-text">
+                    Post without logging in
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="row comment-form hide">
+              <div class="col s12">
+                <p>Please enter your comment below:</p>
+              </div>
+
+              <form class="col s12">
+
+                <div class="row">
+                  <div class="input-field col s6">
+                    <i class="material-icons prefix">account_circle</i>
+                    <input id="name" type="text" class="validate">
+                    <label for="name">Name</label>
+                  </div>
+                  <div class="input-field col s6">
+                    <i class="material-icons prefix">email</i>
+                    <input id="email" type="email" class="validate">
+                    <label for="email">Email</label>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="input-field col s12">
+                    <textarea id="comment-body" class="materialize-textarea"></textarea>
+                    <label for="comment-body">Comment</label>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col s12 tags">
+                    <p>Next, please add tags using the pre-defined tag categories below to help other users find
+                      your comment:
+                    </p>
+                  </div>
+
+                  <div class="col s12 m10 offset-m1">
+
+                    <ul class="collapsible">
+                      <li class="active">
+                        <div class="collapsible-header">
+                          <i class="material-icons">supervisor_account</i>Themes
+                        </div>
+                        
+                        <div class="collapsible-body">
+
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Small Business</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Food Poverty</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Consumption</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Social Media</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Education</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Regulation</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Government</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Capitalism</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Profits</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Middle-actors</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Wholesalers</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Climate Change</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Waste</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Packaging</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Expertise</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Experience</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">Organic</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="blue lighten-1">No-Till</span>
+                          </label>
+
+                        </div>
+                      </li>
+
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">terrain</i>Crops and Livestock
+                        </div>
+                        <div class="collapsible-body">
+
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Wheat</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Barley</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Oats</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Oilseed Rape</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Vegetables</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Livestock Grazing</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Maize</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Beans</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Potatoes</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Onion</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Cows</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Sheep</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="brown lighten-1">Chickens</span>
+                          </label>
+
+                        </div>
+                      </li>
+
+                      <li>
+                        <div class="collapsible-header">
+                          <i class="material-icons">pie_chart</i>Outputs
+                        </div>
+                        <div class="collapsible-body">
+
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="green lighten-1">Production</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="green lighten-1">Greenhouse Gas Emissions</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="green lighten-1">Fertilizer Leeching</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="green lighten-1">Profit</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="green lighten-1">Calorie Production</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Nutrition</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Vegetables</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Tubers</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Whole Grains</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Vegetable Protein</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Animal Protein</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Sugars</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Saturated Fats</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Added Fats</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Dairy</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="amber darken-1">Fruit</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="red lighten-2">Health</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="red lighten-2">Stroke</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="red lighten-2">Cancer</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="red lighten-2">Heart Disease</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="red lighten-2">Diabetes</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="purple lighten-2">Pesticide Impacts</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="purple lighten-2">Ground Water</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="purple lighten-2">Fish</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="purple lighten-2">Birds</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="purple lighten-2">Bees</span>
+                          </label>
+                          <label>
+                            <input type="checkbox" class="lozenge">
+                            <span class="purple lighten-2">Beneficial Arthropods</span>
+                          </label>
+
+                        </div>
+                      </li>
+                    </ul>
+
+                  </div>
+                </div>
+
+              </form>
+
+              <div class="col s12">
+                <p class="grey-text">
+                  Comments are moderated and may be removed if they are found to lack civility,
+                  attack other platform users, or direct hate at a group of people.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cancel</a>
+            <a href="#!" class="modal-close waves-effect green darken-2 white-text waves-green btn-flat"
+               onclick="toggleCommentForm();">Post</a>
+          </div>
+        </div>
+
+      </div>
+      <!-- end comments -->
+
     </div>
   </div>
 
@@ -581,6 +1054,15 @@
           randomiseData();  // Add or subtract random amounts from data in all graphs
       });
   });
+
+  const toggleCommentForm = function() {
+      document.querySelectorAll('.comment-form').forEach((e) => {
+          e.classList.toggle('hide');
+      })
+      document.querySelectorAll('.socialmedia-login').forEach((e) => {
+          e.classList.toggle('hide');
+      })
+  }
 
 </script>
 </body>
