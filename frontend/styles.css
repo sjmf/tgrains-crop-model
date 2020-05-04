@@ -99,23 +99,29 @@ a.sidenav-trigger {
 
 
 /* Sidenav elements */
+li.variable-row {
+    padding: 0 20px;
+    white-space: nowrap;
+}
+
 label.variable {
     display:inline-block;
-    width:125px;
+    width: 50%;
     color: rgba(0,0,0, 0.87);
-    margin-left: 15px;
+    padding:0;
+    margin:0;
+    line-height:3rem;
+}
+
+label.variable + input[type="number"]:not(.browser-default) {
+    width:50%;
+    display: inline-block;
+    padding:0;
+    margin:0;
 }
 
 .select-wrapper + label {
     top:-10px;
-}
-
-label.variable + input[type="number"]:not(.browser-default) {
-    width:125px;
-}
-
-.variable-row {
-    padding:15px;
 }
 
 /* Footer */
@@ -204,7 +210,7 @@ img.logos {
 .comment-card div.row:last-child,
 .comment-form,
 .comment-form div.col:last-child p {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 .comment-header {
