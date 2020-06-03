@@ -6,18 +6,13 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Uhuh... https://github.com/ContinuumIO/docker-images/pull/141
-ENV PATH="/opt/conda/bin:${PATH}"
-
-USER root
-RUN apk add bash build-base gcc abuild binutils cmake
-
-# Deps install
-USER anaconda
-#RUN conda init sh && conda activate && conda update -y -n base -c defaults conda
 COPY ./requirements.txt /app/requirements.txt
 RUN . /opt/conda/etc/profile.d/conda.sh &&\
      conda install -c conda-forge --file requirements.txt
+
+# Uhuh... https://github.com/ContinuumIO/docker-images/pull/141
+# (seems to be only required for Alpine)
+ENV PATH="/opt/conda/bin:${PATH}"
 
 # Copy rest of app environment
 COPY . /app

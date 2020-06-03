@@ -17,5 +17,5 @@ services:
     ports:
         - 80:80
     volumes:
-        - "./conf/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro"
-        - "./frontend:/var/www/html"
+        - "${PWD}/conf/subsite.conf:/etc/nginx/conf.d/subsite.conf:ro"
+        - "${PWD}/frontend:/var/www/html"
