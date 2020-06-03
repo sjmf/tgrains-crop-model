@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<form action="//0.0.0.0:5000/model" method="post">
+  <ul style="list-style-type:none">
+    <!-- LAND AREA SELECT -->
+    <li id="land-area-menu">
+      <label for="landscape_id">Choose your area:</label>
+      <select id="landscape_id" name="landscape_id">
+        <option value="101">East Anglia</option>
+        <option value="102">South Wales</option>
+      </select>
+    </li>
+
+    <!-- CROP AREAS -->
+    <li id="crop-area-menu">
+      <hr/>
+      <span class="subheader">Crop Areas</span>
+    </li>
+
+    <li class="variable-row">
+      <label for="wheat" class="variable">Wheat</label>
+      <input name="wheat" id="wheat" type="number" value="300.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="barley" class="variable">Barley</label>
+      <input name="barley" id="barley" type="number" value="400.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="oats" class="variable">Oats</label>
+      <input name="oats" id="oats" type="number" value="100.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="oilseed" class="variable">Oilseed Rape</label>
+      <input name="oilseed" id="oilseed" type="number" value="600.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="vegetables" class="variable">Vegetables</label>
+      <input name="vegetables" id="vegetables" type="number" value="500.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="livestock" class="variable">Livestock Grazing</label>
+      <input name="livestock" id="livestock" type="number" value="400.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="maize" class="variable">Maize</label>
+      <input name="maize" id="maize" type="number" value="200.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="beans" class="variable">Beans</label>
+      <input name="beans" id="beans" type="number" value="200.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="potatoes" class="variable">Potatoes</label>
+      <input name="potatoes" id="potatoes" type="number" value="800.0" step=".5">
+    </li>
+
+    <li class="variable-row">
+      <label for="onion" class="variable">Onion</label>
+      <input name="onion" id="onion" type="number" value="800.0" step=".5">
+    </li>
+
+    <!-- LIVESTOCK AREAS -->
+    <li id="livestock-area-menu">
+      <hr/>
+      <span class="subheader">Livestock Areas</span>
+    </li>
+
+    <li class="variable-row">
+      <label for="cow" class="variable">Cows</label>
+      <input name="cow" id="cow" type="number" value="1000" step="10">
+    </li>
+
+    <li class="variable-row">
+      <label for="sheep" class="variable">Sheep</label>
+      <input name="sheep" id="sheep" type="number" value="2000" step="10">
+    </li>
+
+    <li class="variable-row">
+      <label for="chicken" class="variable">Chickens</label>
+      <input name="chicken" id="chicken" type="number" value="3000" step="10">
+    </li>
+
+    <li class="dummy">
+      <hr/>
+      <button type="submit">Submit</button>
+    </li>
+
+  </ul>
+</form>
+</body>
+</html>

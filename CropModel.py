@@ -89,7 +89,7 @@ class CropModelException(Exception):
     """Base class for exceptions in this module."""
     pass
 
-class CropModelInitException(Exception):
+class CropModelInitException(CropModelException):
     """Subclass for initialisation exceptions in this module."""
     pass
 
@@ -155,6 +155,7 @@ class CropModel:
     #
     # void RunTGRAINS_RLM(cropData& myCropData)
     def run_model(self):
+
         if not self.initialised:
             raise CropModelInitException("Model not initialised")
 
@@ -194,23 +195,42 @@ class CropModel:
         return cppyy.gbl.getLiveStockString(index)
 
     ##
-    # Set Crop Areas
-    def set_crop_areas(self, cropAreas):
+    # Set the landscape ID to operate on
+    def set_landscape_id(self, landscape_id):
 
-        if type(cropAreas) is not list:
+        if landscape_id not in self.landscapeIDs:
+            raise CropModelException("{} is not a valid Landscape ID".format(landscape_id))
+
+        self.landscape = landscape_id
+
+    ##
+    # Set Crop Areas
+    def set_crop_areas(self, crop_areas):
+
+        if type(crop_areas) is not list:
             raise CropModelException("Crop Areas must be a list of floating-point numbers!")
-        if len(cropAreas) != len(self.cropData.cropAreas):
+        if len(crop_areas) != len(self.cropData.cropAreas):
             raise CropModelException("Crop Areas must be {0} items in length!".format(len(self.cropData.cropAreas)))
-        for c in cropAreas:
+        for c in crop_areas:
             if type(c) is not float:
                 raise CropModelException("Crop Areas must be numeric!")
 
-        self.cropData.cropAreas = cropAreas
+        self.cropData.cropAreas = crop_areas
 
     ##
     # Set Livestock Numbers
-    def set_livestock_numbers(self, liveStockNumbers):
-        raise CropModelException("Not implemented yet!")
+    def set_livestock_areas(self, livestock_areas):
+
+        if type(livestock_areas) is not list:
+            raise CropModelException("Livestock Areas must be a list of floating-point numbers!")
+        if len(livestock_areas) != len(self.cropData.livestockNumbers):
+            raise CropModelException("Livestock Areas must be {0} items in length!".format(len(self.cropData.livestockNumbers)))
+        for c in livestock_areas:
+            if type(c) is not int: #TODO: This will likely need to change to a float for areas
+                raise CropModelException("Livestock Areas must be numeric!")
+
+        self.cropData.livestockNumbers = livestock_areas
+
 
 
 def test():
