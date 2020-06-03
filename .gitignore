@@ -5,5 +5,6 @@ Icon?
 .vagrant/*
 .idea
 .idea/*
+__pycache__/
 model/old/*
 model/prog
