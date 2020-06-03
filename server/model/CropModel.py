@@ -5,8 +5,12 @@
 import cppyy
 from cppyy import ll
 
-MODEL_HEADER_H = 'model/Landscape2019_LinuxSO.h'
-MODEL_LIBRARY_SO = './model/libLandscape2019_LinuxSO.so'
+# Cope with running under relative path as module
+import os.path
+my_path = os.path.abspath(os.path.dirname(__file__))
+
+MODEL_HEADER_H = os.path.join(my_path, 'Landscape2019_LinuxSO.h')
+MODEL_LIBRARY_SO = os.path.join(my_path, 'libLandscape2019_LinuxSO.so')
 
 cppyy.include(MODEL_HEADER_H)
 cppyy.load_library(MODEL_LIBRARY_SO)
@@ -15,11 +19,11 @@ cppyy.ll.set_signals_as_exception(True)
 
 # TO REMOVE WHEN LIBRARY UPDATED:
 # Define a shim in C++. Dynamically compiled at runtime by cppyy using the cling interpreter:
-cppyy.cppdef("""
-    #include "model/Landscape2019_LinuxSO.h"
+SHIM_FUNCTION = """
+    #include "{header}"
 
     typedef struct cropData
-    {
+    {{
         int myUniqueLandscapeID;
         double maxCropArea;
         std::vector<double> cropAreas;
@@ -34,11 +38,11 @@ cppyy.cppdef("""
         std::vector<double> nutritionaldelivery;
         std::vector<double> healthRiskFactors;
         int errorFlag;
-    } cropData;
+    }} cropData;
 
     cropData initialiseTGRAINS_RLM_2(int myUniqueLandscapeID) 
-    {
-        cropData d = {
+    {{
+        cropData d = {{
             myUniqueLandscapeID, 
             0.0,
             std::vector<double>(),
@@ -53,7 +57,7 @@ cppyy.cppdef("""
             std::vector<double>(),
             std::vector<double>(),
             0
-        };
+        }};
 
         initialiseTGRAINS_RLM(
             d.myUniqueLandscapeID,
@@ -64,10 +68,10 @@ cppyy.cppdef("""
         );
 
         return d;
-    };
+    }};
 
     void runTGRAINS_RLM_2(cropData& myCropData) 
-    {
+    {{
         runTGRAINS_RLM(
             myCropData.cropAreas,
             myCropData.livestockNumbers,
@@ -80,9 +84,11 @@ cppyy.cppdef("""
             myCropData.healthRiskFactors,
             myCropData.errorFlag
         );
-    };
-""")
+    }};
+"""
+SHIM_FUNCTION = SHIM_FUNCTION.format(header=os.path.join(my_path,"Landscape2019_LinuxSO.h"))
 
+cppyy.cppdef(SHIM_FUNCTION)
 
 # For Exception Handling:
 class CropModelException(Exception):

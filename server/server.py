@@ -3,7 +3,7 @@ import logging, os, json
 import markdown
 from flask import Flask, Response, Blueprint, Markup, request, render_template
 
-from CropModel import CropModel
+from model.CropModel import CropModel
 
 
 HELPSTRING="""
