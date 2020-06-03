@@ -1,6 +1,11 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Install vagrant-disksize to allow resizing the vagrant box disk.
+unless Vagrant.has_plugin?("vagrant-disksize")
+    raise  Vagrant::Errors::VagrantError.new, "vagrant-disksize plugin is missing. Please install it using 'vagrant plugin install vagrant-disksize' and rerun 'vagrant up'"
+end
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -69,6 +74,11 @@ Vagrant.configure("2") do |config|
   #
   # View the documentation for the provider you are using for more
   # information on available options.
+
+  # Configure disk size using the plugin vagrant-disksize.
+  # This is installed using vagrant plugin install vagrant-disksize
+  #
+  config.disksize.size = '20GB'
 
   # Enable provisioning with a shell script. Additional provisioners such as
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
@@ -142,6 +152,21 @@ EOF
             echo "Miniconda not installed!"
             exit 1
         fi
+EOF
+
+    # Docker install (as root)
+    /usr/bin/sudo -i bash <<"EOF"
+        dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+        dnf install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm
+        dnf install -y docker-ce
+        systemctl enable docker
+        systemctl disable firewalld
+
+        curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose
+        mv docker-compose /usr/local/bin
+        chmod +x /usr/local/bin/docker-compose
+
+        usermod -a -G docker vagrant
 EOF
 
     echo $BORDER

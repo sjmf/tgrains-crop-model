@@ -1,47 +1,30 @@
-FROM python:3.5
+FROM continuumio/miniconda3:4.8.2-alpine
+MAINTAINER Samantha Finnigan
+WORKDIR /app
 
-#MAINTAINER Sebastian Ramirez <tiangolo@gmail.com>
-MAINTAINER Sam Finnigan
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Install uWSGI
-RUN pip install uwsgi
+# Uhuh... https://github.com/ContinuumIO/docker-images/pull/141
+ENV PATH="/opt/conda/bin:${PATH}"
 
-# Standard set up Nginx
-ENV NGINX_VERSION 1.9.11-1~jessie
+USER root
+RUN apk add bash build-base gcc abuild binutils cmake
 
-RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
-	&& echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
-	&& apt-get update \
-	&& apt-get install -y ca-certificates nginx=${NGINX_VERSION} gettext-base \
-	&& rm -rf /var/lib/apt/lists/*
-# forward request and error logs to docker log collector
-RUN ln -sf /dev/stdout /var/log/nginx/access.log \
-	&& ln -sf /dev/stderr /var/log/nginx/error.log
-EXPOSE 80
-# Finished setting up Nginx
-
-# Install Supervisord
-RUN apt-get update && apt-get install -y supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install requirements
-COPY conf/requirements.txt .
-RUN pip install -r requirements.txt
-
-# Copy configuration files
-
-# Make NGINX run on the foreground
-RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-# Remove default configuration from Nginx
-RUN rm /etc/nginx/conf.d/default.conf
-# Copy the modified Nginx conf
-COPY conf/nginx.conf /etc/nginx/conf.d/
-
-# Custom Supervisord config
-COPY conf/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Deps install
+USER anaconda
+#RUN conda init sh && conda activate && conda update -y -n base -c defaults conda
+COPY ./requirements.txt /app/requirements.txt
+RUN . /opt/conda/etc/profile.d/conda.sh &&\
+     conda install -c conda-forge --file requirements.txt
 
 # Copy rest of app environment
 COPY . /app
-WORKDIR /app
 
-CMD ["/usr/bin/supervisord"]
+EXPOSE 5000
+
+ENTRYPOINT gunicorn --worker-tmp-dir /dev/shm \
+            --workers=2 --threads=4 --worker-class=gthread \
+            --timeout 120 \
+            --bind 0.0.0.0:5000 'server:app'

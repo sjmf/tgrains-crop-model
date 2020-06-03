@@ -1,12 +1,21 @@
-version: '2'
+version: '3.6'
+
 services: 
-    web:
-        build: .
-        ports: 
-        - "8889:80"
-        environment:
-        - PROXY_PATH=/votebox/
-        links:
-        - mongo
-    mongo:
-        image: mongo
+  gunicorn:
+    container_name: gunicorn
+    build:
+      context: ./server
+    expose:
+      - 5000
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    depends_on:
+      - gunicorn
+    restart: unless-stopped
+    ports:
+        - 80:80
+    volumes:
+        - "./conf/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro"
+        - "./frontend:/var/www/html"
