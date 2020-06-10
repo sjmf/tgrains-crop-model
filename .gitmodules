@@ -1,0 +1,3 @@
+[submodule "frontend"]
+	path = frontend
+	url = git@bitbucket.org:SamFinnigan/crop-frontend.git
