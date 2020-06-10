@@ -5,6 +5,7 @@ services:
     container_name: gunicorn
     build:
       context: ./server
+    restart: unless-stopped
     expose:
       - 5000
 
