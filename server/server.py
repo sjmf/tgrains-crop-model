@@ -20,6 +20,12 @@ _Method:_ `GET`
 Returns a HTML test form which can be used to POST values to the `/model` endpoint.
 
 
+### [/echo](/echo)
+_Method:_ `POST`
+
+Echos whatever POST request it received back at the browser. 
+
+
 ### [/model](/model)
 _Method:_ `GET`
 
@@ -80,6 +86,12 @@ flask_options = {
 }
 
 
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+
 # Testing
 #@app.after_request
 #def after_request(response):
@@ -96,6 +108,12 @@ def index():
     log.info(request)
     return Response(Markup("<!DOCTYPE html>\n<title>CropModel</title>\n") \
             + Markup(markdown.markdown(HELPSTRING))) , 200
+
+
+@crops.route('/echo', methods=['POST'])
+def echo():
+    log.info(request.headers)
+    return Response("{}\n{}".format(str(request.headers), request.get_data().decode('utf-8')), mimetype='text/plain'), 200
 
 
 @crops.route('/test', methods=['GET'])
