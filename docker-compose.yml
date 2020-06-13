@@ -6,6 +6,10 @@ services:
     build:
       context: ./server
     restart: unless-stopped
+    volumes:
+      # You don't need this for production because the Dockerfile
+      # does COPY . /app, but it helps for development!
+      - "${PWD}/server/:/app"
     expose:
       - 5000
 
@@ -18,5 +22,5 @@ services:
     ports:
         - 80:80
     volumes:
-        - "${PWD}/conf/subsite.conf:/etc/nginx/conf.d/subsite.conf:ro"
+        - "${PWD}/conf/subsite.conf:/etc/nginx/conf.d/default.conf:ro"
         - "${PWD}/frontend:/var/www/html"
