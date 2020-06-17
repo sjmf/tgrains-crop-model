@@ -122,10 +122,10 @@ class CropModel:
     ##
     # Pretty print internal state
     def __str__(self):
-        return str("\n".join(["{0}:\n\t{1}".format(k,v) for k,v in self.toDict().items()]))
+        return str("\n".join(["{0}:\n\t{1}".format(k,v) for k,v in self.to_dict().items()]))
 
 
-    def toDict(self):
+    def to_dict(self):
         c = {k: v for k, v in vars(cppyy.gbl.cropData).items() if not k.startswith('_')}
         c = {x: getattr(self.cropData, x) for x in c.keys()}
         for k in c.keys():
@@ -258,7 +258,8 @@ def test():
     print(model.get_livestock_string(1))
 
     print("Success!")
-    return 0;
+    return 0
+
 
 if __name__ == "__main__":
     test()
