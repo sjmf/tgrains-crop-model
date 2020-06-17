@@ -2,3 +2,6 @@ cppyy
 flask
 markdown
 gunicorn
+celery
+redis
+redis-py
