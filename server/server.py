@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-import logging, os, json
+import logging, os
 import markdown
-from flask import Flask, Response, Blueprint, Markup, request, render_template
-
-from model.CropModel import CropModel
-
+from flask import Flask, Response, Blueprint, Markup, request, render_template, jsonify, url_for
+from celery import Celery
 
 HELPSTRING="""
 # Crop Model API Routes
@@ -75,7 +73,7 @@ crops = Blueprint('crops', __name__, template_folder='templates')
 
 # Configuration
 CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
-FLASK_ENV='development'
+FLASK_ENV=os.environ.get('FLASK_ENV', 'development')
 
 app.config.from_object(__name__)
 
@@ -85,14 +83,33 @@ flask_options = {
     #'threaded': True
 }
 
+# Setup Celery
+def make_celery(_app):
 
-if __name__ != '__main__':
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
+    _celery = Celery(
+        _app.import_name,
+        backend=_app.config['CELERY_RESULT_BACKEND'],
+        broker=_app.config['CELERY_BROKER_URL']
+    )
+    _celery.conf.update(_app.config)
+
+    class ContextTask(_celery.Task):
+        def __call__(self, *args, **kwargs):
+            with _app.app_context():
+                return self.run(*args, **kwargs)
+
+    # noinspection PyPropertyAccess
+    _celery.Task = ContextTask
+    return _celery
+
+# Celery task queue details
+host = 'localhost' if FLASK_ENV == 'development' else 'redis'
+app.config['CELERY_BROKER_URL'] = 'redis://{}:6379/0'.format(host)
+app.config['CELERY_RESULT_BACKEND'] = 'redis://{}:6379/0'.format(host)
+celery = make_celery(app)
 
 
-# Testing
+# Add CORS headers if an issue in testing
 #@app.after_request
 #def after_request(response):
 #    response.headers.add('Access-Control-Allow-Origin', '*')
@@ -110,7 +127,7 @@ def index():
             + Markup(markdown.markdown(HELPSTRING))) , 200
 
 
-@crops.route('/echo', methods=['POST'])
+@crops.route('/echo', methods=['GET', 'POST'])
 def echo():
     log.info(request.headers)
     return Response("{}\n{}".format(str(request.headers), request.get_data().decode('utf-8')), mimetype='text/plain'), 200
@@ -122,61 +139,66 @@ def test():
     return render_template('test.html')
 
 
+@crops.route('model', methods=['POST'])
+def model_post():
+    data = request.form.to_dict(flat=True)
+    log.info(data)
+
+    task = celery.send_task('celery_model_run', kwargs={'data': data, 'landscape_id': data['landscape_id']}, expires=120)
+
+    return jsonify({'task_id': task.id}), 303, {'Location': url_for('task_status', task_id=task.id)}
+
+
 @crops.route('model', methods=['GET'])
 def model_get():
     landscape_id = request.args.get('landscape_id')
+    if landscape_id is None:
+        return 'Bad Request: Must provide landscape_id=101 or 102 as parameter!', 400
+    log.info(landscape_id)
 
-    # Initialise crop model
-    model = CropModel()
-    if landscape_id:
-        model.set_landscape_id(int(landscape_id))
-    model.initialise_model()
-    model.run_model()
-    log.info(request)
-
-    return Response(json.dumps(model.toDict()), mimetype='application/json'), 200
-    #return Response(str(model), mimetype='application/json'), 200
+    task = celery.send_task('celery_model_get_bau', kwargs={'landscape_id': landscape_id}, expires=120)
+    log.info(task.id)
+    return jsonify({'task_id': task.id}), 303, {'Location': url_for('task_status', task_id=task.id)}
 
 
-@crops.route('model', methods=['POST'])
-def model_post():
-    data = request.form
-    log.info(data)
+@app.route('/status/<task_id>')
+def task_status(task_id):
 
-    # Initialise crop model
-    model = CropModel()
-    model.set_landscape_id(int(data['landscape_id']))
-    model.initialise_model()
-
-    max_crops = len(model.cropAreasBAU)
-    crop_areas = []
-    for i in range(0, max_crops):
-        crop = model.get_crop_string(i).lower().split(' ')[0]
-        area = float(data[crop])
-        #log.info("{}={}".format(crop, area))
-        crop_areas.append(area)
-
-    max_livestock = len(model.livestockNumbersBAU)
-    livestock_areas = []
-    for i in range(0, max_livestock):
-        livestock = model.get_livestock_string(i).lower()#.split(' ')[0]
-        area = int(data[livestock])                             #TODO: This will likely need to change to type float
-        #log.info("{}={}".format(livestock, area))
-        livestock_areas.append(area)
-
-    # set crop areas takes an ordered list of float point numbers
-    model.set_crop_areas(crop_areas)
-    model.set_livestock_areas(livestock_areas)
-    model.run_model()
-    log.info(request)
-
-    return Response(json.dumps(model.toDict()), mimetype='application/json'), 200
-    #return Response(str(model), mimetype='application/json'), 200
+    task = celery.AsyncResult(task_id)
+    log.info(task)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = {
+            'state': task.state,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
 
 
 # Register blueprint to the app
 app.register_blueprint(crops, url_prefix=APPLICATION_ROOT)
 
+
+'''
+    Gunicorn logging options. Not run in dev server
+'''
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
 
 '''
     Main. Does not run when running with WSGI
