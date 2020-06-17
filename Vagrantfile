@@ -44,6 +44,9 @@ Vagrant.configure("2") do |config|
   # Nginx/UWSGI (production)
   config.vm.network "forwarded_port", guest: 80, host: 8000, host_ip: "127.0.0.1"
 
+  # Redis (development)
+  config.vm.network "forwarded_port", guest: 6379, host: 6379, host_ip: "127.0.0.1"
+
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   # config.vm.network "private_network", ip: "192.168.33.10"
