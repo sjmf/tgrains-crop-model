@@ -19,7 +19,7 @@ COPY . /app
 
 EXPOSE 5000
 
-ENTRYPOINT gunicorn --worker-tmp-dir /dev/shm \
+CMD gunicorn --worker-tmp-dir /dev/shm \
             --workers=2 --threads=4 --worker-class=gthread \
             --timeout 120 \
             --bind 0.0.0.0:5000 'server:app'

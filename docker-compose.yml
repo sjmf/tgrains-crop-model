@@ -1,26 +1,68 @@
 version: '3.6'
 
-services: 
+services:
   gunicorn:
     container_name: gunicorn
     build:
       context: ./server
     restart: unless-stopped
-    volumes:
-      # You don't need this for production because the Dockerfile
-      # does COPY . /app, but it helps for development!
-      - "${PWD}/server/:/app"
+    depends_on:
+      - redis
+      - celery
+# You don't need this for production because the Dockerfile
+# does COPY . /app, but it helps for development!
+#    volumes:
+#      - "${PWD}/server/:/app"
+    environment:
+      - FLASK_ENV=production
     expose:
       - 5000
+    networks:
+      - backend
+
+  celery:
+    container_name: celery
+    build:
+      context: ./server
+    restart: unless-stopped
+# You don't need this for production because the Dockerfile
+# does COPY . /app, but it helps for development!
+#    volumes:
+#      - "${PWD}/server/:/app"
+    command: /bin/sh -c "celery worker -A tasks.celery --loglevel=INFO --concurrency=20"
+    working_dir: /app/
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    networks:
+      - backend
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+#    ports:
+#      # For development, expose redis to host
+#      - "6379:6379/tcp"
+    networks:
+      - backend
 
   nginx:
     image: nginx:alpine
     container_name: nginx
-    depends_on:
-      - gunicorn
     restart: unless-stopped
     ports:
-        - 80:80
+      - "80:80"
+    depends_on:
+      - gunicorn
     volumes:
-        - "${PWD}/conf/subsite.conf:/etc/nginx/conf.d/default.conf:ro"
-        - "${PWD}/frontend:/var/www/html"
+      - "${PWD}/conf/subsite.conf:/etc/nginx/conf.d/default.conf:ro"
+      - "${PWD}/frontend:/var/www/html"
+    networks:
+      - backend
+      - default
+
+networks:
+  backend:
+    driver: bridge
+  default:
