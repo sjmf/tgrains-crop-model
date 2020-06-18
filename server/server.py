@@ -37,8 +37,8 @@ Valid landscape IDs are currently 101, 102.
 ### [/model](/model)
 _Method:_ `POST`
 
-Post variables to the model for response. POST body MUST include all the below variables. Values (with the exception of
-`landscape_id`, an integer) are in hectares and will be interpreted as float-point numbers.
+Post variables to the model for response. POST body MUST include all the below variables, formatted as JSON. Values 
+(with the exception of `landscape_id`, an integer) are in hectares and will be interpreted as float-point numbers.
 
 * landscape_id = 101
 * wheat        = 400
@@ -141,7 +141,8 @@ def test():
 
 @crops.route('model', methods=['POST'])
 def model_post():
-    data = request.form.to_dict(flat=True)
+    #data = request.form.to_dict(flat=True)
+    data = request.get_json()
     log.info(data)
 
     task = celery.send_task('celery_model_run', kwargs={'data': data, 'landscape_id': data['landscape_id']}, expires=120)
