@@ -109,13 +109,15 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://{}:6379/0'.format(host)
 celery = make_celery(app)
 
 
-# Add CORS headers if an issue in testing
-#@app.after_request
-#def after_request(response):
-#    response.headers.add('Access-Control-Allow-Origin', '*')
-#    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-#    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-#    return response
+# Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
+@app.after_request
+def after_request(response):
+    if FLASK_ENV == 'development':
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+    return response
+
 
 '''
     Application Routes
