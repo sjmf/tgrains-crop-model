@@ -47,17 +47,15 @@ services:
     networks:
       - backend
 
-  nginx:
-    image: nginx:alpine
+  frontend:
     container_name: nginx
+    build:
+      context: ./frontend
     restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - gunicorn
-    volumes:
-      - "${PWD}/conf/subsite.conf:/etc/nginx/conf.d/default.conf:ro"
-      - "${PWD}/frontend:/var/www/html"
     networks:
       - backend
       - default
