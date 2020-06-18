@@ -29,7 +29,7 @@ services:
 # does COPY . /app, but it helps for development!
 #    volumes:
 #      - "${PWD}/server/:/app"
-    command: /bin/sh -c "celery worker -A tasks.celery --loglevel=INFO --concurrency=20"
+    command: /bin/sh -c "celery worker -A tasks.celery --loglevel=INFO --concurrency=8"
     working_dir: /app/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
