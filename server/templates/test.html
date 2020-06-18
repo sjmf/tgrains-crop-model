@@ -3,11 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>API Test</title>
+    <style type="text/css">
+      ul {
+        list-style-type:none
+      }
+      label {
+        min-width: 10rem;
+        display: inline-block;
+      }
+    </style>
 </head>
 <body>
 
-<form action="/model" method="post">
-  <ul style="list-style-type:none">
+<form id="test" action="/model" method="post">
+  <ul>
     <!-- LAND AREA SELECT -->
     <li id="land-area-menu">
       <label for="landscape_id">Choose your area:</label>
@@ -20,7 +29,7 @@
     <!-- CROP AREAS -->
     <li id="crop-area-menu">
       <hr/>
-      <span class="subheader">Crop Areas</span>
+      <span class="subheader"><strong>Crop Areas</strong></span>
     </li>
 
     <li class="variable-row">
@@ -76,7 +85,7 @@
     <!-- LIVESTOCK AREAS -->
     <li id="livestock-area-menu">
       <hr/>
-      <span class="subheader">Livestock Areas</span>
+      <span class="subheader"><strong>Livestock Areas</strong></span>
     </li>
 
     <li class="variable-row">
@@ -98,8 +107,56 @@
       <hr/>
       <button type="submit">Submit</button>
     </li>
-
+    <pre id="output"></pre>
   </ul>
 </form>
+<script type="text/javascript">
+(function() {
+	function toJSONString( form ) {
+		let obj = {};
+		let elements = form.querySelectorAll( "input, select, textarea" );
+		for( let i = 0; i < elements.length; ++i ) {
+			let name = elements[i].name;
+			let value = elements[i].value;
+
+			if( name ) {
+				obj[ name ] = value;
+			}
+		}
+
+		// Remove last 2 variables to condense string.
+		return JSON.stringify(obj, undefined, 2);
+	}
+
+	document.addEventListener( "DOMContentLoaded", function() {
+		let form = document.getElementById( "test" );
+		let output = document.getElementById( "output" );
+		form.addEventListener( "submit", function( e ) {
+			e.preventDefault();
+			let json = toJSONString( this );
+
+            let text = document.createTextNode( "Sending: \n\n" + json + "\n\nAwaiting response... ");
+            output.appendChild(text);
+
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", form.action);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(json);
+            console.log("sent XHR Request")
+
+            xhr.onreadystatechange = function() {
+                if (this.readyState === 4) {
+                    let text = document.createTextNode( this.status + "\n\n" );
+                    output.appendChild(text);
+                    text = document.createTextNode( xhr.getAllResponseHeaders() );
+                    output.appendChild(text);
+                    text = document.createTextNode( xhr.response );
+                    output.appendChild(text);
+                }
+            };
+		}, false);
+	});
+})();
+</script>
 </body>
 </html>
