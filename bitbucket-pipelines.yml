@@ -10,21 +10,10 @@ pipelines:
     - step:
         services:
           - docker
+        caches:
+          - docker
         script: 
-          # Initialise the frontend submodule
-          - git submodule update --init
-          
-          # Set $DOCKER_HUB_USERNAME and $DOCKER_HUB_PASSWORD as environment variables in repository settings
           - export BACKEND_IMAGE_NAME=${DOCKER_HUB_USERNAME}/tgrains-cropmodel-backend
-          - export FRONTEND_IMAGE_NAME=${DOCKER_HUB_USERNAME}/tgrains-cropmodel-frontend
-          
-          # build the Docker image (this will use the Dockerfile in the root of the repo)
           - docker build -t $BACKEND_IMAGE_NAME:$BITBUCKET_COMMIT -t $BACKEND_IMAGE_NAME:latest ./server/
-          - docker build -t $FRONTEND_IMAGE_NAME:$BITBUCKET_COMMIT -t $FRONTEND_IMAGE_NAME:latest ./frontend/
-          
-          # authenticate with the Docker Hub registry
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
-          
-          # push the new Docker image to the Docker registry
           - docker push $BACKEND_IMAGE_NAME
-          - docker push $FRONTEND_IMAGE_NAME
