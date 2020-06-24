@@ -48,7 +48,7 @@ services:
       - backend
 
   frontend:
-    container_name: nginx
+    container_name: frontend
     build:
       context: ./frontend
     restart: unless-stopped
