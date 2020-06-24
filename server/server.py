@@ -55,6 +55,23 @@ Post variables to the model for response. POST body MUST include all the below v
 * sheep        = 200
 * pig          = 100
 
+
+## [/crops](/crops)
+_Method:_ `GET`
+
+Get list of crops. Takes a variable for landscape ID, e.g.:
+
+`GET /crops?landscape_id=101`
+
+
+## [/livestock](/livestock)
+_Method:_ `GET`
+
+Get list of livestock. Takes a variable for landscape ID, e.g.:
+
+`GET /livestock?landscape_id=101`
+
+
 """
 
 # Set up logger
@@ -149,12 +166,25 @@ def model_post():
 
 @crops.route('model', methods=['GET'])
 def model_get():
-    landscape_id = request.args.get('landscape_id')
+    return celery_get(request.args.get('landscape_id'), 'celery_model_get_bau')
+
+
+@crops.route('crops', methods=['GET'])
+def crops_get():
+    return celery_get(request.args.get('landscape_id'), 'celery_get_crop_names')
+
+
+@crops.route('livestock', methods=['GET'])
+def livestock_get():
+    return celery_get(request.args.get('landscape_id'), 'celery_get_livestock_names')
+
+
+# Helper function - abstract 'get'-type task for the routes above
+def celery_get(landscape_id, task_name):
     if landscape_id is None:
         return 'Bad Request: Must provide landscape_id=101 or 102 as parameter!', 400
-    log.info(landscape_id)
 
-    task = celery.send_task('celery_model_get_bau', kwargs={'landscape_id': landscape_id}, expires=120)
+    task = celery.send_task(task_name, kwargs={'landscape_id': landscape_id}, expires=120)
     log.info(task.id)
     return jsonify({'task_id': task.id}), 303, {'Location': url_for('task_status', task_id=task.id)}
 

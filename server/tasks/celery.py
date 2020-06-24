@@ -12,23 +12,52 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localho
 celery_app = Celery('tasks', broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
 
 
-
-@celery_app.task(bind=True, track_started=True, name='celery_model_get_bau')
-def celery_model_get_bau(self, landscape_id):
+# Helper function which initialises a model
+def initialise_model(self, landscape_id):
 
     self.update_state(state='PROGRESS', meta={'status': 'Initialising'})
-
+    
     # Initialise crop model
     model = CropModel()
     model.set_landscape_id(int(landscape_id))
     model.initialise_model()
 
     self.update_state(state='PROGRESS', meta={'status': 'Running'})
-    model.run_model()
+    return model
 
+
+@celery_app.task(bind=True, track_started=True, name='celery_get_crop_names')
+def celery_get_crop_names(self, landscape_id):
+
+    model = initialise_model(self, landscape_id)
+
+    names = list()
+    for i in range(0, len(model.cropAreasBAU)):
+        names.append(model.get_crop_string(i))
+
+    return {'result': names}
+
+
+@celery_app.task(bind=True, track_started=True, name='celery_get_livestock_names')
+def celery_get_livestock_names(self, landscape_id):
+
+    model = initialise_model(self, landscape_id)
+
+    names = list()
+    for i in range(0, len(model.livestockNumbersBAU)):
+        names.append(model.get_livestock_string(i))
+
+    return {'result': names}
+
+
+@celery_app.task(bind=True, track_started=True, name='celery_model_get_bau')
+def celery_model_get_bau(self, landscape_id):
+
+    model = initialise_model(self, landscape_id)
+
+    model.run_model()
     result = model.to_dict()
 
-    #self.update_state(state='SUCCESS')
     log.info(result)
 
     return {'result': result}
@@ -37,12 +66,7 @@ def celery_model_get_bau(self, landscape_id):
 @celery_app.task(bind=True, track_started=True, name='celery_model_run')
 def celery_model_run(self, landscape_id, data):
 
-    self.update_state(state='PROGRESS', meta={'status': 'Initialising'})
-
-    # Initialise crop model
-    model = CropModel()
-    model.set_landscape_id(int(landscape_id))
-    model.initialise_model()
+    model = initialise_model(self, landscape_id)
 
     # Extract parameters from strings and build a list to pass to CropModel
     max_crops = len(model.cropAreasBAU)
@@ -65,7 +89,6 @@ def celery_model_run(self, landscape_id, data):
     model.set_crop_areas(crop_areas)
     model.set_livestock_areas(livestock_areas)
 
-    self.update_state(state='PROGRESS', meta={'status': 'Running'})
     model.run_model()
 
     result = model.to_dict()
