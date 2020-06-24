@@ -63,25 +63,20 @@ log = logging.getLogger(__name__)
 # Create flask app
 app = Flask(__name__)
 
-# Set up blueprint
+# Set up configuration
+FLASK_ENV=os.environ.get('FLASK_ENV', 'development')
+CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
 APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
-#from werkzeug.middleware.proxy_fix import ProxyFix
-#app.wsgi_app = ProxyFix(app.wsgi_app)
+
+# Fix path when running behind a proxy (e.g. nginx, traefik, etc)
+if FLASK_ENV == 'production':
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_port=1)
 
 crops = Blueprint('crops', __name__, template_folder='templates')
 # Look at end of file for where this blueprint is actually registered to the app
 
-# Configuration
-CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
-FLASK_ENV=os.environ.get('FLASK_ENV', 'development')
-
 app.config.from_object(__name__)
-
-flask_options = {
-    'host': '0.0.0.0',
-    'debug': True,
-    #'threaded': True
-}
 
 # Setup Celery
 def make_celery(_app):
@@ -214,5 +209,9 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG) 
 
     log.debug(app.url_map)
-    app.run(**flask_options)
+    app.run(**{
+        'host': '0.0.0.0',
+        'debug': True,
+        #'threaded': True
+    })
 
