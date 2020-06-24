@@ -56,20 +56,12 @@ Post variables to the model for response. POST body MUST include all the below v
 * pig          = 100
 
 
-## [/crops](/crops)
+## [/strings](/strings)
 _Method:_ `GET`
 
-Get list of crops. Takes a variable for landscape ID, e.g.:
+Get the list of crop and livestock strings. Takes a variable for landscape ID, e.g.:
 
-`GET /crops?landscape_id=101`
-
-
-## [/livestock](/livestock)
-_Method:_ `GET`
-
-Get list of livestock. Takes a variable for landscape ID, e.g.:
-
-`GET /livestock?landscape_id=101`
+`GET /strings?landscape_id=101`
 
 
 """
@@ -169,14 +161,9 @@ def model_get():
     return celery_get(request.args.get('landscape_id'), 'celery_model_get_bau')
 
 
-@crops.route('crops', methods=['GET'])
-def crops_get():
-    return celery_get(request.args.get('landscape_id'), 'celery_get_crop_names')
-
-
-@crops.route('livestock', methods=['GET'])
-def livestock_get():
-    return celery_get(request.args.get('landscape_id'), 'celery_get_livestock_names')
+@crops.route('strings', methods=['GET'])
+def strings_get():
+    return celery_get(request.args.get('landscape_id'), 'celery_get_strings')
 
 
 # Helper function - abstract 'get'-type task for the routes above

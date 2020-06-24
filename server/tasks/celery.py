@@ -26,28 +26,19 @@ def initialise_model(self, landscape_id):
     return model
 
 
-@celery_app.task(bind=True, track_started=True, name='celery_get_crop_names')
-def celery_get_crop_names(self, landscape_id):
+@celery_app.task(bind=True, track_started=True, name='celery_get_strings')
+def celery_get_strings(self, landscape_id):
 
     model = initialise_model(self, landscape_id)
 
-    names = list()
+    strings = {'crops': [], 'livestock': []}
     for i in range(0, len(model.cropAreasBAU)):
-        names.append(model.get_crop_string(i))
+        strings['crops'].append(model.get_crop_string(i).lower().split(' ')[0])  # TODO: If Crop model returns single-word strings in new version, remove the end of this command.
 
-    return {'result': names}
-
-
-@celery_app.task(bind=True, track_started=True, name='celery_get_livestock_names')
-def celery_get_livestock_names(self, landscape_id):
-
-    model = initialise_model(self, landscape_id)
-
-    names = list()
     for i in range(0, len(model.livestockNumbersBAU)):
-        names.append(model.get_livestock_string(i))
+        strings['livestock'].append(model.get_livestock_string(i).lower().split(' ')[0])  # TODO: If Crop model returns single-word strings in new version, remove the end of this command.
 
-    return {'result': names}
+    return {'result': strings}
 
 
 @celery_app.task(bind=True, track_started=True, name='celery_model_get_bau')
@@ -72,7 +63,7 @@ def celery_model_run(self, landscape_id, data):
     max_crops = len(model.cropAreasBAU)
     crop_areas = []
     for i in range(0, max_crops):
-        crop = model.get_crop_string(i).lower().split(' ')[0]
+        crop = model.get_crop_string(i).lower().split(' ')[0]  # TODO: If Crop model returns single-word strings in new version, remove the end of this command.
         area = float(data[crop])
         # log.info("{}={}".format(crop, area))
         crop_areas.append(area)
@@ -81,7 +72,7 @@ def celery_model_run(self, landscape_id, data):
     livestock_areas = []
     for i in range(0, max_livestock):
         livestock = model.get_livestock_string(i).lower()  # .split(' ')[0]
-        area = int(data[livestock])  # TODO: This will likely need to change to type float
+        area = int(data[livestock])  # TODO: Livestock will likely need to change to type float
         # log.info("{}={}".format(livestock, area))
         livestock_areas.append(area)
 
