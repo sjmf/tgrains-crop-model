@@ -2,6 +2,7 @@ import os
 from celery import Celery
 from celery.utils.log import get_task_logger
 from model.CropModel import CropModel, CropModelException
+import cppyy
 
 # Set up logger
 log = get_task_logger(__name__)
@@ -31,12 +32,12 @@ def celery_get_strings(self, landscape_id):
 
     model = initialise_model(self, landscape_id)
 
-    strings = {'crops': [], 'livestock': []}
-    for i in range(0, len(model.cropAreasBAU)):
-        strings['crops'].append(model.get_crop_string(i).lower().split(' ')[0])  # TODO: If Crop model returns single-word strings in new version, remove the end of this command.
-
-    for i in range(0, len(model.livestockNumbersBAU)):
-        strings['livestock'].append(model.get_livestock_string(i).lower().split(' ')[0])  # TODO: If Crop model returns single-word strings in new version, remove the end of this command.
+    strings = {
+        'crops': [ model.get_crop_string(i).lower()
+                   for i in range(model.cropAreas.size())],
+        'livestock': [ model.get_livestock_string(i).lower()
+                       for i in range(model.livestockAreas.size())]
+    }
 
     return {'result': strings}
 
@@ -45,7 +46,6 @@ def celery_get_strings(self, landscape_id):
 def celery_model_get_bau(self, landscape_id):
 
     model = initialise_model(self, landscape_id)
-
     model.run_model()
     result = model.to_dict()
 
@@ -59,32 +59,27 @@ def celery_model_run(self, landscape_id, data):
 
     model = initialise_model(self, landscape_id)
 
-    # Extract parameters from strings and build a list to pass to CropModel
-    max_crops = len(model.cropAreasBAU)
-    crop_areas = []
+    # Extract parameters from strings and mutate CropModel directly
+    max_crops = model.cropAreas.size()
     for i in range(0, max_crops):
-        crop = model.get_crop_string(i).lower().split(' ')[0]  # TODO: If Crop model returns single-word strings in new version, remove the end of this command.
+        crop = model.get_crop_string(i).lower()
         area = float(data[crop])
         # log.info("{}={}".format(crop, area))
-        crop_areas.append(area)
+        model.cropAreas[i] = area
 
-    max_livestock = len(model.livestockNumbersBAU)
-    livestock_areas = []
+    max_livestock = model.livestockAreas.size()
     for i in range(0, max_livestock):
-        livestock = model.get_livestock_string(i).lower()  # .split(' ')[0]
-        area = int(data[livestock])  # TODO: Livestock will likely need to change to type float
+        livestock = model.get_livestock_string(i).lower()
+        area = float(data[livestock])
         # log.info("{}={}".format(livestock, area))
-        livestock_areas.append(area)
+        model.livestockAreas[i] = area
 
-    # set_crop_areas takes an ordered list of float point numbers
-    model.set_crop_areas(crop_areas)
-    model.set_livestock_areas(livestock_areas)
-
-    model.run_model()
+    try:
+        model.run_model()
+    except cppyy.gbl.std.length_error as err:
+        raise err
 
     result = model.to_dict()
-
-    #self.update_state(state='SUCCESS')
     log.info(result)
 
     return {'result': result}
