@@ -6,6 +6,12 @@ unless Vagrant.has_plugin?("vagrant-disksize")
     raise  Vagrant::Errors::VagrantError.new, "vagrant-disksize plugin is missing. Please install it using 'vagrant plugin install vagrant-disksize' and rerun 'vagrant up'"
 end
 
+# Install vagrant-vbguest to update guest additions on box launch
+unless Vagrant.has_plugin?("vagrant-vbguest")
+    raise  Vagrant::Errors::VagrantError.new, "vagrant-vbguest plugin is missing. Please install it using 'vagrant plugin install vagrant-vbguest' and rerun 'vagrant up'"
+end
+
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -17,7 +23,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "centos/8"
+  config.vm.box = "ubuntu/focal64"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -60,6 +66,7 @@ Vagrant.configure("2") do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
   config.vm.synced_folder ".", "/vagrant_data", type: "virtualbox"
   config.vm.synced_folder '.', '/vagrant', disabled: true
 
@@ -78,10 +85,17 @@ Vagrant.configure("2") do |config|
   # View the documentation for the provider you are using for more
   # information on available options.
 
+  # Configure virtual memory allocation need more than 1024 for Boost compilation
+  config.vm.provider "virtualbox" do |v|
+      v.memory = 4096
+      v.cpus = 2
+  end
+
   # Configure disk size using the plugin vagrant-disksize.
   # This is installed using vagrant plugin install vagrant-disksize
   #
-  config.disksize.size = '20GB'
+#   config.disksize.size = '10GB'
+
 
   # Enable provisioning with a shell script. Additional provisioners such as
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
@@ -90,28 +104,50 @@ Vagrant.configure("2") do |config|
   #   apt-get update
   #   apt-get install -y apache2
   # SHELL
-
   config.vm.provision "shell", inline: <<-SHELL
-    set -e
-    #script_name=`basename $0`
-    #script_relative_path=`dirname $0`
-    #cp "$script_relative_path/$script_name" $HOME
+    sudo apt-get update
 
-    BORDER="===================================================="
+    BORDER="\n\n===================================================="
 
-    echo $BORDER
+    echo -e $BORDER
     echo "Installing binutils..."
 
-    # Get GCC compiler, etc
-    yum -y update
-    yum -y groupinstall "Development Tools"
-    yum -y install wget
+    apt-get -y install build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev mlocate
+    apt-get -y install libgfortran-5-dev
+    apt-get -y install libgfortran5
 
-    echo $BORDER
+
+    echo -e $BORDER
+
+    # Install Boost. Change VERSION parameter to update the installed version
+    if locate boost;
+    then
+        echo "Boost already installed"
+    else
+        export VERSION=1_72_0
+        export V_DOTS=$( echo ${VERSION} | tr '_' '.' )
+
+        echo "Installing libboost${V_DOTS} from source..."
+
+        echo "Downloading boost from sourceforge... (quiet)"
+        wget -q -O boost_${VERSION}.tar.gz https://sourceforge.net/projects/boost/files/boost/${V_DOTS}/boost_${VERSION}.tar.gz/download
+        tar xzvf boost_${VERSION}.tar.gz
+        cd boost_${VERSION}/
+
+        ./bootstrap.sh --prefix=/usr/
+
+        ## Build ONLY the serialization library, that's all that the TGRAINS model needs
+        ./b2 --with-serialization install
+
+        cd ../
+        rm -rf boost_${VERSION}
+        rm boost_${VERSION}.tar.gz
+    fi
+
+    echo -e $BORDER
     echo "Installing miniconda..."
 
-    # Provisioner runs as root. Sudo as `vagrant` user:
-    # Devtoolset on Centos6 breaks sudo with a wrapper. Call /usr/bin/sudo directly
+    # Provisioner runs as root. Sudo as `vagrant` user for conda install:
     /usr/bin/sudo -i -u vagrant bash <<"EOF"
         if [[ ! -d "$HOME/miniconda" ]];
         then
@@ -123,79 +159,68 @@ Vagrant.configure("2") do |config|
 #            echo "Modifying PATH..."
 #            sed -i 's;^PATH=\(.*\);PATH=\1\:\$HOME\/miniconda\/bin;' $HOME/.bash_profile
 #            grep "PATH" -n .bash_profile
+             echo "PATH=/home/vagrant/miniconda/bin/:$PATH" >> .profile
         else
             echo "Miniconda already installed! ^_^"
         fi
 EOF
 
 
-    echo $BORDER
+    echo -e $BORDER
     echo "Installing cppyy and development tools using conda..."
 
     /usr/bin/sudo -i -u vagrant bash <<"EOF"
-        if [[ -d "$HOME/miniconda" ]];
+        PATH="$PATH:$HOME/miniconda/bin"
+
+        if conda list | grep -E 'cppyy|flask|markdown|jupyter|xeus' 2>&1>/dev/null; 
         then
-            PATH="$PATH:$HOME/miniconda/bin"
-            conda init bash
-            eval "$(conda shell.bash hook)"
-            conda update -y -n base -c defaults conda
-            # We originally configured a conda environment here, but leaving it as (base) solves problems!
-            conda install -yc conda-forge cppyy
-            conda install -y flask markdown
-
-            # Development tools
-            conda install -yc conda-forge jupyter
-            jupyter notebook --generate-config
-            sed -i 's/c.NotebookApp.ip.*/c.NotebookApp.ip = "0.0.0.0"/g' /home/vagrant/.jupyter/jupyter_notebook_config.py
-
-            conda install xeus xeus-cling -c conda-forge
-            conda install jupyterthemes -c conda-forge
-            jt -t monokai
+            echo "cppyy and devtools already installed :)"
         else
-            echo "Miniconda not installed!"
-            exit 1
+            if [[ -d "$HOME/miniconda" ]];
+            then
+                conda init bash
+                eval "$(conda shell.bash hook)"
+                conda update -y -n base -c defaults conda
+
+                # We originally configured a conda environment here, but leaving it as (base) solves problems!
+                conda install -yc conda-forge cppyy
+                conda install -y flask markdown
+
+                # Development tools
+                conda install -yc conda-forge jupyter
+                jupyter notebook --generate-config
+                sed -i 's/c.NotebookApp.ip.*/c.NotebookApp.ip = "0.0.0.0"/g' /home/vagrant/.jupyter/jupyter_notebook_config.py
+                sed -i '/^#c.NotebookApp.ip /s/^#//' /home/vagrant/.jupyter/jupyter_notebook_config.py
+
+                conda install xeus xeus-cling -c conda-forge
+                conda install jupyterthemes -c conda-forge
+                jt -t monokai
+            else
+                echo "Miniconda not installed!"
+                exit 1
+            fi
         fi
 EOF
 
-    # Docker install (as root)
-    /usr/bin/sudo -i bash <<"EOF"
-        dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-        dnf install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm
-        dnf install -y docker-ce
-        systemctl enable docker
-        systemctl disable firewalld
-
-        curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose
-        mv docker-compose /usr/local/bin
-        chmod +x /usr/local/bin/docker-compose
-
-        usermod -a -G docker vagrant
-EOF
 
     echo $BORDER
-    echo "To install VirtualBox Guest Additions for 2-way synced folder, manual"
-    echo "steps are required as you need to mount the ISO: See"
-    echo "https://www.if-not-true-then-false.com/2010/install-virtualbox-guest-additions-on-fedora-centos-red-hat-rhel/"
-    # Guest additions instructions for mount folder in 2-way synced_folder
-    echo -e "\n"
-    echo <<"EOF"
-        sudo -i
-        yum update kernel*
-        dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-        yum install -y gcc kernel-devel kernel-headers dkms make bzip2 perl
+    echo "Installing Docker"
 
-        KERN_DIR=/usr/src/kernels/`uname -r`
-        export KERN_DIR
+    if hash docker 2>/dev/null; then
+        echo "Docker already installed :)"
+    else
+        apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+        apt-get update
+        apt-cache policy docker-ce
 
-        mkdir /media/VirtualBoxGuestAdditions
-        mount -r /dev/cdrom /media/VirtualBoxGuestAdditions
-        cd /media/VirtualBoxGuestAdditions
+        apt-get -y install docker-ce
+        systemctl status docker
+        usermod -aG docker vagrant
 
-        ./VBoxLinuxAdditions.run
-        reboot
-EOF
+        apt-get install -y docker-compose
+    fi
+
   SHELL
 end
-
-  #NB: In configuring the interpreter in PyCharm, specify the interpreter as /home/vagrant/miniconda/bin/python
-  #    It will fail silently if it can't find the executable (e.g. if it's set to the default /usr/bin/python)
