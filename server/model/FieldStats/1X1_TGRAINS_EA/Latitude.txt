@@ -1,0 +1,4 @@
+Elevation test catchment : 1st row = no rows, 2nd row = no cols, size of cell in m
+1   
+1 
+52.0 

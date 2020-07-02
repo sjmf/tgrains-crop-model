@@ -1,0 +1,8 @@
+Ammonium shallow followed by mid followed by deep : 1st row = no rows, 2nd row = no cols. 															
+1															
+1															
+28.0
+mid															
+3.5
+deep															
+3.5

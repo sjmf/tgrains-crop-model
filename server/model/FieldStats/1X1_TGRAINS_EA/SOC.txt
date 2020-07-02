@@ -1,0 +1,12 @@
+Soil OC (% weight?); shallow followed by mid followed by deep : 1st row = no rows, 2nd row = no cols			
+1					
+1					
+1.111367
+mid					
+1.111367
+deep					
+1.111367
+
+// C in layers 2 and 3 are 50% and 25% of layer 1 so this needs to be check 
+// RTS: are layers 2 and 3 being calculated as shallow*mid and shallow*deep, respectively? (previous mid/deep values set as 0.49/0.25)
+

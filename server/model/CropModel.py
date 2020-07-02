@@ -9,8 +9,8 @@ from cppyy import ll
 import os.path
 my_path = os.path.abspath(os.path.dirname(__file__))
 
-MODEL_HEADER_H = os.path.join(my_path, 'Landscape2019_LinuxSO.h')
-MODEL_LIBRARY_SO = os.path.join(my_path, 'libLandscape2019_LinuxSO.so')
+MODEL_HEADER_H = os.path.join(my_path, 'TGRAINS.h')
+MODEL_LIBRARY_SO = os.path.join(my_path, 'libTGRAINS.so')
 
 cppyy.include(MODEL_HEADER_H)
 cppyy.load_library(MODEL_LIBRARY_SO)
@@ -27,7 +27,7 @@ SHIM_FUNCTION = """
         int myUniqueLandscapeID;
         double maxCropArea;
         std::vector<double> cropAreas;
-        std::vector<int> livestockNumbers;
+        std::vector<double> livestockAreas;
 
         double greenhouseGasEmissions;
         double nLeach;
@@ -46,24 +46,24 @@ SHIM_FUNCTION = """
             myUniqueLandscapeID, 
             0.0,
             std::vector<double>(),
-            std::vector<int>(),
-
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-
             std::vector<double>(),
+
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+
+            std::vector<double>(5,0),
             std::vector<double>(),
             std::vector<double>(),
             0
         }};
 
-        initialiseTGRAINS_RLM(
+        initialise(
             d.myUniqueLandscapeID,
             d.maxCropArea,
             d.cropAreas,
-            d.livestockNumbers,
+            d.livestockAreas,
             d.errorFlag
         );
 
@@ -72,9 +72,9 @@ SHIM_FUNCTION = """
 
     void runTGRAINS_RLM_2(cropData& myCropData) 
     {{
-        runTGRAINS_RLM(
+        run(
             myCropData.cropAreas,
-            myCropData.livestockNumbers,
+            myCropData.livestockAreas,
             myCropData.greenhouseGasEmissions, 
             myCropData.nLeach,
             myCropData.pesticideImpacts,
@@ -86,7 +86,7 @@ SHIM_FUNCTION = """
         );
     }};
 """
-SHIM_FUNCTION = SHIM_FUNCTION.format(header=os.path.join(my_path,"Landscape2019_LinuxSO.h"))
+SHIM_FUNCTION = SHIM_FUNCTION.format(header=os.path.join(my_path,"TGRAINS.h"))
 
 cppyy.cppdef(SHIM_FUNCTION)
 
@@ -110,8 +110,8 @@ class CropModel:
         # Globals
         self.cropData = None
 
-        self.cropAreasBAU = None
-        self.livestockNumbersBAU = None
+        self.cropAreas = None
+        self.livestockAreas = None
 
         self.landscapeIDs = list(cppyy.gbl.getLandscapeIDs())
         self.landscape = self.landscapeIDs[0]
@@ -149,8 +149,8 @@ class CropModel:
         if self.cropData.errorFlag != 0:
             raise CropModelException("Model initialisation failed")
 
-        self.cropAreasBAU = self.cropData.cropAreas
-        self.livestockNumbersBAU = self.cropData.livestockNumbers
+        self.cropAreas = self.cropData.cropAreas
+        self.livestockAreas = self.cropData.livestockAreas
 
         self.initialised = True
 
@@ -224,18 +224,18 @@ class CropModel:
         self.cropData.cropAreas = crop_areas
 
     ##
-    # Set Livestock Numbers
+    # Set Livestock Areas
     def set_livestock_areas(self, livestock_areas):
 
         if type(livestock_areas) is not list:
             raise CropModelException("Livestock Areas must be a list of floating-point numbers!")
-        if len(livestock_areas) != len(self.cropData.livestockNumbers):
-            raise CropModelException("Livestock Areas must be {0} items in length!".format(len(self.cropData.livestockNumbers)))
+        if len(livestock_areas) != len(self.cropData.livestockAreas):
+            raise CropModelException("Livestock Areas must be {0} items in length!".format(len(self.cropData.livestockAreas)))
         for c in livestock_areas:
-            if type(c) is not int: #TODO: This will likely need to change to a float for areas
+            if type(c) is not float:
                 raise CropModelException("Livestock Areas must be numeric!")
 
-        self.cropData.livestockNumbers = livestock_areas
+        self.cropData.livestockAreas = livestock_areas
 
 
 
@@ -245,17 +245,27 @@ def test():
 
     print("Initialising Model...")
     model.initialise_model()
+    print(model)
+
+    # Mutate the state a bit
+    from cppyy.gbl.std import vector
+    total_crop_area = 0
+    for d in model.cropAreas:
+        total_crop_area = total_crop_area + d
+
+    crop_props = vector['double']((0.1, 0.05, 0.1, 0.075, 0.125, 0.07, 0.06, 0.05, 0.05, 0.025, 0.05))
+    for i in range(model.cropAreas.size()):
+        model.cropAreas[i] = total_crop_area * crop_props.at(i)
 
     print("Running Model...")
     model.run_model()
-
     print(model)
 
     print()
 
     print(model.get_landscape_string(model.landscapeIDs[0]))
-    print(model.get_crop_string(1))
-    print(model.get_livestock_string(1))
+    print(model.get_crop_string(0))
+    print(model.get_livestock_string(0))
 
     print("Success!")
     return 0

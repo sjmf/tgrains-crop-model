@@ -1,0 +1,8 @@
+Soil clay (%*100?); shallow followed by mid followed by deep : 1st row = no rows, 2nd row = no cols			
+1			
+1			
+19.175192
+mid					
+19.175192	
+deep					
+19.175192
