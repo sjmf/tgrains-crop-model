@@ -1,0 +1,3 @@
+# Don't touch line endings for anything in the model data directories
+server/model/FieldStats/1X1_TGRAINS_EA/** binary
+server/model/Weather/W_TGRAINS_EA/** binary
