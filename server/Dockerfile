@@ -21,9 +21,11 @@ RUN export VERSION=1_72_0                                &&\
     echo "Installing libboost${V_DOTS} from source..."   &&\
                                                            \
     echo "Downloading boost from sourceforge... (quiet)" &&\
-    wget -O boost_${VERSION}.tar.gz                        \
+    wget -nv -O boost_${VERSION}.tar.gz                    \
         https://sourceforge.net/projects/boost/files/boost/${V_DOTS}/boost_${VERSION}.tar.gz/download &&\
-    tar xzvf boost_${VERSION}.tar.gz                     &&\
+                                                           \
+    echo "Extracting boost..."                           &&\
+    tar xzf boost_${VERSION}.tar.gz                      &&\
     cd boost_${VERSION}/                                 &&\
                                                            \
     ./bootstrap.sh --prefix=/usr/                        &&\
@@ -32,7 +34,7 @@ RUN export VERSION=1_72_0                                &&\
     cd ../                                               &&\
     rm -rf boost_${VERSION}                              &&\
     rm boost_${VERSION}.tar.gz                           &&\
-    echo "Installed libboost-serialization"
+    echo "Installed libboost-serialization${V_DOTS}"
 
 # Uhuh... https://github.com/ContinuumIO/docker-images/pull/141
 # (seems to be only required for Alpine)
