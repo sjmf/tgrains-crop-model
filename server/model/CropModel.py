@@ -247,6 +247,10 @@ def test():
     model.initialise_model()
     print(model)
 
+    print("Running Model...")
+    model.run_model()
+    print(model)
+
     # Mutate the state a bit
     from cppyy.gbl.std import vector
     total_crop_area = 0
@@ -255,16 +259,18 @@ def test():
 
     crop_props = vector['double']((0.1, 0.05, 0.1, 0.075, 0.125, 0.07, 0.06, 0.05, 0.05, 0.025, 0.05))
     for i in range(model.cropAreas.size()):
-        model.cropAreas[i] = total_crop_area * crop_props.at(i)
+        model.cropAreas[i] = total_crop_area * crop_props[i]
 
-    print("Running Model...")
+    print("Running Model after mutations...")
     model.run_model()
     print(model)
 
     print()
 
     print(model.get_landscape_string(model.landscapeIDs[0]))
-    print(model.get_crop_string(0))
+    for i in range(model.cropAreas.size()):
+        print(model.get_crop_string(i))
+
     print(model.get_livestock_string(0))
 
     print("Success!")
