@@ -36,7 +36,10 @@ def celery_get_strings(self, landscape_id):
         'crops': [ model.get_crop_string(i).lower()
                    for i in range(model.cropAreas.size())],
         'livestock': [ model.get_livestock_string(i).lower()
-                       for i in range(model.livestockAreas.size())]
+                       for i in range(model.livestockAreas.size())],
+        'food_groups': [model.get_food_group_string(i).lower()
+                        for i in range(model.data.nutritionaldelivery.size())]
+
     }
 
     return {'result': strings}

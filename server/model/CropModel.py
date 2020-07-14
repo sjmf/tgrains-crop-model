@@ -22,7 +22,7 @@ cppyy.ll.set_signals_as_exception(True)
 SHIM_FUNCTION = """
     #include "{header}"
 
-    typedef struct cropData
+    typedef struct tgrainsData
     {{
         int myUniqueLandscapeID;
         double maxCropArea;
@@ -38,11 +38,11 @@ SHIM_FUNCTION = """
         std::vector<double> nutritionaldelivery;
         std::vector<double> healthRiskFactors;
         int errorFlag;
-    }} cropData;
+    }} tgrainsData;
 
-    cropData initialiseTGRAINS_RLM_2(int myUniqueLandscapeID) 
+    tgrainsData initialiseTGRAINS_RLM_2(int myUniqueLandscapeID) 
     {{
-        cropData d = {{
+        tgrainsData d = {{
             myUniqueLandscapeID, 
             0.0,
             std::vector<double>(),
@@ -70,19 +70,19 @@ SHIM_FUNCTION = """
         return d;
     }};
 
-    void runTGRAINS_RLM_2(cropData& myCropData) 
+    void runTGRAINS_RLM_2(tgrainsData& myData) 
     {{
         run(
-            myCropData.cropAreas,
-            myCropData.livestockAreas,
-            myCropData.greenhouseGasEmissions, 
-            myCropData.nLeach,
-            myCropData.pesticideImpacts,
-            myCropData.profit,
-            myCropData.production,
-            myCropData.nutritionaldelivery,
-            myCropData.healthRiskFactors,
-            myCropData.errorFlag
+            myData.cropAreas,
+            myData.livestockAreas,
+            myData.greenhouseGasEmissions, 
+            myData.nLeach,
+            myData.pesticideImpacts,
+            myData.profit,
+            myData.production,
+            myData.nutritionaldelivery,
+            myData.healthRiskFactors,
+            myData.errorFlag
         );
     }};
 """
@@ -108,7 +108,7 @@ class CropModel:
     def __init__(self):
 
         # Globals
-        self.cropData = None
+        self.data = None
 
         self.cropAreas = None
         self.livestockAreas = None
@@ -126,8 +126,8 @@ class CropModel:
 
 
     def to_dict(self):
-        c = {k: v for k, v in vars(cppyy.gbl.cropData).items() if not k.startswith('_')}
-        c = {x: getattr(self.cropData, x) for x in c.keys()}
+        c = {k: v for k, v in vars(cppyy.gbl.tgrainsData).items() if not k.startswith('_')}
+        c = {x: getattr(self.data, x) for x in c.keys()}
         for k in c.keys():
             if type(c[k]) == cppyy.gbl.std.vector['double'] or \
                     type(c[k]) == cppyy.gbl.std.vector['int']:
@@ -143,14 +143,14 @@ class CropModel:
     def initialise_model(self):
 
         # Initialise Model
-        self.cropData = cppyy.gbl.initialiseTGRAINS_RLM_2(self.landscape)
+        self.data = cppyy.gbl.initialiseTGRAINS_RLM_2(self.landscape)
         self.landscapeIDs = list(cppyy.gbl.getLandscapeIDs())
 
-        if self.cropData.errorFlag != 0:
+        if self.data.errorFlag != 0:
             raise CropModelException("Model initialisation failed")
 
-        self.cropAreas = self.cropData.cropAreas
-        self.livestockAreas = self.cropData.livestockAreas
+        self.cropAreas = self.data.cropAreas
+        self.livestockAreas = self.data.livestockAreas
 
         self.initialised = True
 
@@ -166,12 +166,12 @@ class CropModel:
             raise CropModelInitException("Model not initialised")
 
         # Run model
-        cppyy.gbl.runTGRAINS_RLM_2(self.cropData)
+        cppyy.gbl.runTGRAINS_RLM_2(self.data)
 
-        if self.cropData.errorFlag != 0:
+        if self.data.errorFlag != 0:
             raise CropModelException("Model run failed")
 
-        return self.cropData
+        return self.data
 
     ##
     # Get built-in landscape string identifiers
@@ -224,13 +224,13 @@ class CropModel:
 
         if type(crop_areas) is not list:
             raise CropModelException("Crop Areas must be a list of floating-point numbers!")
-        if len(crop_areas) != len(self.cropData.cropAreas):
-            raise CropModelException("Crop Areas must be {0} items in length!".format(len(self.cropData.cropAreas)))
+        if len(crop_areas) != len(self.data.cropAreas):
+            raise CropModelException("Crop Areas must be {0} items in length!".format(len(self.data.cropAreas)))
         for c in crop_areas:
             if type(c) is not float:
                 raise CropModelException("Crop Areas must be numeric!")
 
-        self.cropData.cropAreas = crop_areas
+        self.data.cropAreas = crop_areas
 
     ##
     # Set Livestock Areas
@@ -238,13 +238,13 @@ class CropModel:
 
         if type(livestock_areas) is not list:
             raise CropModelException("Livestock Areas must be a list of floating-point numbers!")
-        if len(livestock_areas) != len(self.cropData.livestockAreas):
-            raise CropModelException("Livestock Areas must be {0} items in length!".format(len(self.cropData.livestockAreas)))
+        if len(livestock_areas) != len(self.data.livestockAreas):
+            raise CropModelException("Livestock Areas must be {0} items in length!".format(len(self.data.livestockAreas)))
         for c in livestock_areas:
             if type(c) is not float:
                 raise CropModelException("Livestock Areas must be numeric!")
 
-        self.cropData.livestockAreas = livestock_areas
+        self.data.livestockAreas = livestock_areas
 
 
 
@@ -279,8 +279,8 @@ def test():
     print(model.get_landscape_string(model.landscapeIDs[0]))
 
     print([model.get_crop_string(i) for i in range(model.cropAreas.size())])
-    print([model.get_food_group_string(i) for i in range(model.cropData.nutritionaldelivery.size())])
-    print([model.get_livestock_string(i) for i in range(model.cropData.livestockAreas.size())])
+    print([model.get_food_group_string(i) for i in range(model.data.nutritionaldelivery.size())])
+    print([model.get_livestock_string(i) for i in range(model.data.livestockAreas.size())])
 
     print("Success!")
     return 0
