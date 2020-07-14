@@ -17,8 +17,8 @@ cppyy.load_library(MODEL_LIBRARY_SO)
 # Need to call this with cppyy.ll cppyy.ll.signals_as_exception
 cppyy.ll.set_signals_as_exception(True)
 
-# TO REMOVE WHEN LIBRARY UPDATED:
-# Define a shim in C++. Dynamically compiled at runtime by cppyy using the cling interpreter:
+# Define a convenience shim in C++.
+# Dynamically compiled at runtime by cppyy using the cling interpreter:
 SHIM_FUNCTION = """
     #include "{header}"
 
@@ -201,6 +201,15 @@ class CropModel:
         return cppyy.gbl.getLiveStockString(index)
 
     ##
+    # Get built-in food group identifiers
+    def get_food_group_string(self, index):
+
+        if not self.initialised:
+            raise CropModelInitException("Model not initialised")
+
+        return cppyy.gbl.getFoodGroupString(index)
+
+    ##
     # Set the landscape ID to operate on
     def set_landscape_id(self, landscape_id):
 
@@ -265,13 +274,13 @@ def test():
     model.run_model()
     print(model)
 
-    print()
+    print("\n=== STRINGS ===")
 
     print(model.get_landscape_string(model.landscapeIDs[0]))
-    for i in range(model.cropAreas.size()):
-        print(model.get_crop_string(i))
 
-    print(model.get_livestock_string(0))
+    print([model.get_crop_string(i) for i in range(model.cropAreas.size())])
+    print([model.get_food_group_string(i) for i in range(model.cropData.nutritionaldelivery.size())])
+    print([model.get_livestock_string(i) for i in range(model.cropData.livestockAreas.size())])
 
     print("Success!")
     return 0
