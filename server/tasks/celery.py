@@ -12,6 +12,10 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localho
 
 celery_app = Celery('tasks', broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
 
+# We don't have an array length for nutritionaldelivery until run() is called.
+# Therefore, we need to define its length to return food group strings:
+TOTAL_FOOD_GROUPS=9
+
 
 # Helper function which initialises a model
 def initialise_model(self, landscape_id):
@@ -38,9 +42,10 @@ def celery_get_strings(self, landscape_id):
         'livestock': [ model.get_livestock_string(i).lower()
                        for i in range(model.livestockAreas.size())],
         'food_groups': [model.get_food_group_string(i).lower()
-                        for i in range(model.data.nutritionaldelivery.size())]
-
+                        for i in range(TOTAL_FOOD_GROUPS)]
     }
+
+    log.info(model.data.nutritionaldelivery.size())
 
     return {'result': strings}
 
