@@ -74,13 +74,13 @@ Vagrant.configure("2") do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
+  config.vm.provider "virtualbox" do |vb|
   #   # Display the VirtualBox GUI when booting the machine
   #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
+
+     # Customize the amount of memory on the VM:
+     vb.memory = "4096"
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -113,36 +113,8 @@ Vagrant.configure("2") do |config|
     echo "Installing binutils..."
 
     apt-get -y install build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev mlocate
-    apt-get -y install libgfortran-5-dev
-    apt-get -y install libgfortran5
+    apt-get -y install libboost-serialization1.71.0 libgfortran5
 
-
-    echo -e $BORDER
-
-    # Install Boost. Change VERSION parameter to update the installed version
-    if locate boost;
-    then
-        echo "Boost already installed"
-    else
-        export VERSION=1_72_0
-        export V_DOTS=$( echo ${VERSION} | tr '_' '.' )
-
-        echo "Installing libboost${V_DOTS} from source..."
-
-        echo "Downloading boost from sourceforge... (quiet)"
-        wget -q -O boost_${VERSION}.tar.gz https://sourceforge.net/projects/boost/files/boost/${V_DOTS}/boost_${VERSION}.tar.gz/download
-        tar xzvf boost_${VERSION}.tar.gz
-        cd boost_${VERSION}/
-
-        ./bootstrap.sh --prefix=/usr/
-
-        ## Build ONLY the serialization library, that's all that the TGRAINS model needs
-        ./b2 --with-serialization install
-
-        cd ../
-        rm -rf boost_${VERSION}
-        rm boost_${VERSION}.tar.gz
-    fi
 
     echo -e $BORDER
     echo "Installing miniconda..."
