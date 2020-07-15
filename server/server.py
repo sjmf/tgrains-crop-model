@@ -15,16 +15,28 @@ Return this help string
 ### [/test](/test)
 _Method:_ `GET`
 
+**FLASK_ENV=development ONLY** 
+
 Returns a HTML test form which can be used to POST values to the `/model` endpoint.
 
 
 ### [/echo](/echo)
 _Method:_ `POST`
 
+**FLASK_ENV=development ONLY** 
+
 Echos whatever POST request it received back at the browser. 
 
 
-### [/model](/model)
+### [/strings](/strings?landscape_id=101)
+_Method:_ `GET`
+
+Get the list of crop and livestock strings. Takes a variable for landscape ID, e.g.:
+
+`GET /strings?landscape_id=101`
+
+
+### [/model](/model?landscape_id=101)
 _Method:_ `GET`
 
 Get the BAU (Business as usual) state. Takes a variable for landscape ID, e.g.:
@@ -41,27 +53,7 @@ Post variables to the model for response. POST body MUST include all the below v
 (with the exception of `landscape_id`, an integer) are in hectares and will be interpreted as float-point numbers.
 
 * landscape_id = 101
-* wheat        = 400
-* barley       = 400
-* oats         = 200
-* oilseed      = 800
-* vegetables   = 800
-* livestock    = 400
-* maize        = 400
-* beans        = 200
-* potatoes     = 800
-* onion        = 800
-* cow          = 300
-* sheep        = 200
-* pig          = 100
-
-
-## [/strings](/strings)
-_Method:_ `GET`
-
-Get the list of crop and livestock strings. Takes a variable for landscape ID, e.g.:
-
-`GET /strings?landscape_id=101`
+* (Crop and livestock variables, which are now retrieved via [/strings](strings?landscape_id=101))
 
 
 """
@@ -133,16 +125,18 @@ def index():
             + Markup(markdown.markdown(HELPSTRING))) , 200
 
 
-@crops.route('/echo', methods=['GET', 'POST'])
-def echo():
-    log.info(request.headers)
-    return Response("{}\n{}".format(str(request.headers), request.get_data().decode('utf-8')), mimetype='text/plain'), 200
+# Development / debug routes. Not available in production
+if FLASK_ENV == 'development':
+    @crops.route('/echo', methods=['GET', 'POST'])
+    def echo():
+        log.info(request.headers)
+        return Response("{}\n{}".format(str(request.headers), request.get_data().decode('utf-8')), mimetype='text/plain'), 200
 
 
-@crops.route('/test', methods=['GET'])
-def test():
-    log.info(request)
-    return render_template('test.html')
+    @crops.route('/test', methods=['GET'])
+    def test():
+        log.info(request)
+        return render_template('test.html')
 
 
 @crops.route('model', methods=['POST'])
