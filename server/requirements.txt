@@ -5,3 +5,4 @@ gunicorn
 celery
 redis
 redis-py
+flask-redis

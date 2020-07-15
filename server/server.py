@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-import logging, os
+import logging, os, pickle
+
 import markdown
 from flask import Flask, Response, Blueprint, Markup, request, render_template, jsonify, url_for
+from flask_redis import FlaskRedis
+from redis.exceptions import ConnectionError
 from celery import Celery
 
 HELPSTRING="""
@@ -65,7 +68,7 @@ log = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Set up configuration
-FLASK_ENV=os.environ.get('FLASK_ENV', 'development')
+FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
 CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
 APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
 
@@ -73,6 +76,10 @@ APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
 if FLASK_ENV == 'production':
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_port=1)
+
+# Redis cache URL
+HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))
 
 crops = Blueprint('crops', __name__, template_folder='templates')
 # Look at end of file for where this blueprint is actually registered to the app
@@ -99,11 +106,13 @@ def make_celery(_app):
     return _celery
 
 # Celery task queue details
-host = 'localhost' if FLASK_ENV == 'development' else 'redis'
-app.config['CELERY_BROKER_URL'] = 'redis://{}:6379/0'.format(host)
-app.config['CELERY_RESULT_BACKEND'] = 'redis://{}:6379/0'.format(host)
+# Need to place this in app.config as config.from_object(__name__) already called above
+app.config['CELERY_BROKER_URL'] = REDIS_URL
+app.config['CELERY_RESULT_BACKEND'] = REDIS_URL
 celery = make_celery(app)
 
+# Create redis cache
+redis_client = FlaskRedis(app)
 
 # Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
 @app.after_request
@@ -152,21 +161,51 @@ def model_post():
 
 @crops.route('model', methods=['GET'])
 def model_get():
-    return celery_get(request.args.get('landscape_id'), 'celery_model_get_bau')
+    return cached_task('celery_model_get_bau', request.args.get('landscape_id'))
 
 
 @crops.route('strings', methods=['GET'])
 def strings_get():
-    return celery_get(request.args.get('landscape_id'), 'celery_get_strings')
+    return cached_task('celery_get_strings', request.args.get('landscape_id'))
 
 
-# Helper function - abstract 'get'-type task for the routes above
-def celery_get(landscape_id, task_name):
+# Helper function: cache a celery task
+def cached_task(task_name, landscape_id):
     if landscape_id is None:
         return 'Bad Request: Must provide landscape_id=101 or 102 as parameter!', 400
 
+    redis_key = "flask:{0}:{1}".format(task_name, landscape_id)
+
+    # Need only ever run celery task once per landscape ID: check for a stored key in Redis
+    exists = redis_client.get(redis_key)
+    if exists:
+        try:
+            task = pickle.loads(exists)
+            log.info("Cache HIT: {} / {} / {}".format(redis_key, task.id, task.state))
+
+            # Don't return the cache if it failed!
+            if task.state != "FAILURE":
+                return see_other_redirect(task)
+
+        except ConnectionError as e:
+            log.error(e)
+            log.error("redis.exceptions.ConnectionError is likely due to stale Celery tasks in Redis.")
+            log.error("Clear the redis cache (e.g. using redis_client.flushall()) and try again.")
+
+    # If not exists, run celery task:
     task = celery.send_task(task_name, kwargs={'landscape_id': landscape_id}, expires=120)
-    log.info(task.id)
+
+    # Cache the landscape ID against the task in Redis on first-run under key strings_get:101|102
+    # Expires in 24h, same as the celery task - this means we won't need to check if the
+    # task still exists because it'll expire automatically.
+    redis_client.setex(redis_key, 86400, value=pickle.dumps(task))
+
+    # Return existing celery task which can be queried with /status
+    return see_other_redirect(task)
+
+
+# Helper function - redirect with HTTP 303 SEE OTHER
+def see_other_redirect(task):
     return jsonify({'task_id': task.id}), 303, {'Location': url_for('task_status', task_id=task.id)}
 
 
@@ -174,7 +213,7 @@ def celery_get(landscape_id, task_name):
 def task_status(task_id):
 
     task = celery.AsyncResult(task_id)
-    log.info(task)
+
     if task.state == 'PENDING':
         # job did not start yet
         response = {
