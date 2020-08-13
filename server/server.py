@@ -7,59 +7,9 @@ from flask_redis import FlaskRedis
 from redis.exceptions import ConnectionError
 from celery import Celery
 
-HELPSTRING="""
-# Crop Model API Routes
-
-### [/ (index)](/)
-_Method:_ `GET`   
-Return this help string
-
-
-### [/test](/test)
-_Method:_ `GET`
-
-**FLASK_ENV=development ONLY** 
-
-Returns a HTML test form which can be used to POST values to the `/model` endpoint.
-
-
-### [/echo](/echo)
-_Method:_ `POST`
-
-**FLASK_ENV=development ONLY** 
-
-Echos whatever POST request it received back at the browser. 
-
-
-### [/strings](/strings?landscape_id=101)
-_Method:_ `GET`
-
-Get the list of crop and livestock strings. Takes a variable for landscape ID, e.g.:
-
-`GET /strings?landscape_id=101`
-
-
-### [/model](/model?landscape_id=101)
-_Method:_ `GET`
-
-Get the BAU (Business as usual) state. Takes a variable for landscape ID, e.g.:
-
-`GET /model?landscape_id=101`
-
-Valid landscape IDs are currently 101, 102.
-
-
-### [/model](/model)
-_Method:_ `POST`
-
-Post variables to the model for response. POST body MUST include all the below variables, formatted as JSON. Values 
-(with the exception of `landscape_id`, an integer) are in hectares and will be interpreted as float-point numbers.
-
-* landscape_id = 101
-* (Crop and livestock variables, which are now retrieved via [/strings](strings?landscape_id=101))
-
-
-"""
+HELP_STRING= "TGRAINS Server"
+with open('templates/docs.md', 'r') as file:
+    HELP_STRING = file.read()
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -131,7 +81,7 @@ def after_request(response):
 def index():
     log.info(request)
     return Response(Markup("<!DOCTYPE html>\n<title>CropModel</title>\n") \
-            + Markup(markdown.markdown(HELPSTRING))) , 200
+                    + Markup(markdown.markdown(HELP_STRING))) , 200
 
 
 # Development / debug routes. Not available in production
