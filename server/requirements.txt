@@ -6,3 +6,6 @@ celery
 redis
 redis-py
 flask-redis
+sqlalchemy==1.3.18
+flask-sqlalchemy
+mysqlclient

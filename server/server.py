@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import logging, os, pickle
+from datetime import datetime
 
 import markdown
-from flask import Flask, Response, Blueprint, Markup, request, render_template, jsonify, url_for
+from flask import Flask, Response, Blueprint, Markup, redirect, request, render_template, jsonify, url_for, escape
 from flask_redis import FlaskRedis
 from redis.exceptions import ConnectionError
 from celery import Celery
+from flask_sqlalchemy import SQLAlchemy
 
 HELP_STRING= "TGRAINS Server"
 with open('templates/docs.md', 'r') as file:
@@ -21,6 +23,8 @@ app = Flask(__name__)
 FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
 CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
 APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
+SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/') #'sqlite://')
+
 
 # Fix path when running behind a proxy (e.g. nginx, traefik, etc)
 if FLASK_ENV == 'production':
@@ -31,8 +35,8 @@ if FLASK_ENV == 'production':
 HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))
 
-crops = Blueprint('crops', __name__, template_folder='templates')
 # Look at end of file for where this blueprint is actually registered to the app
+crops = Blueprint('crops', __name__, template_folder='templates')
 
 app.config.from_object(__name__)
 
@@ -63,6 +67,30 @@ celery = make_celery(app)
 
 # Create redis cache
 redis_client = FlaskRedis(app)
+
+# SQL Database connection parameters
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# SQLAlchemy comment class
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(140))
+    author = db.Column(db.String(32))
+    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True)
+    reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+# Create SQLAlchemy DB in MySQL on first run
+if 'mysql' in SQLALCHEMY_DATABASE_URI:
+    db.engine.execute('CREATE DATABASE IF NOT EXISTS tgrains;')
+    db.engine.execute('USE tgrains;')
+db.create_all()
+
 
 # Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
 @app.after_request
@@ -161,7 +189,6 @@ def see_other_redirect(task):
 
 @app.route('/status/<task_id>')
 def task_status(task_id):
-
     task = celery.AsyncResult(task_id)
 
     if task.state == 'PENDING':
@@ -185,6 +212,45 @@ def task_status(task_id):
         }
     return jsonify(response)
 
+
+@crops.route('comment', methods=['GET'])
+def get_comments():
+    data = request.args.to_dict(flat=True)
+    log.info(data)
+
+    try:
+        page = int(request.args.get('page'))
+        size = int(request.args.get('size'))
+    except (ValueError, TypeError) as e:
+        log.error(e)
+        page, size = (1, 5)
+
+    # Pagination (load in pages)
+    query = Comment.query.order_by(Comment.id.desc())
+    comments = query.paginate(page, size, True).items
+    length = query.count()
+
+    return jsonify({
+        'comments': [i.as_dict() for i in comments],
+        'length': length,
+        'page': page,
+        'size': size
+    })
+
+
+@crops.route('comment', methods=['POST'])
+def post_comment():
+    data = request.get_json()
+    log.info(data)
+
+    # ALWAYS escape text taken from user to prevent XSS scriptjacking attacks
+    db.session.add(Comment(
+        text=escape(data['text']),
+        author=escape(data['author']),
+        reply_id=int(data['reply_id']) if 'reply_id' in data else None))
+    db.session.commit()
+
+    return redirect(url_for('get_comments'), code=303)
 
 # Register blueprint to the app
 app.register_blueprint(crops, url_prefix=APPLICATION_ROOT)
