@@ -15,6 +15,8 @@ services:
 #      - "${PWD}/server/:/app"
     environment:
       - FLASK_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/
     expose:
       - 5000
     networks:
@@ -37,13 +39,31 @@ services:
     networks:
       - backend
 
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=devpassword
+      - MYSQL_DATABASE=tgrains
+      - MYSQL_USER=flask
+      - MYSQL_PASSWORD=sqlalchemy_devpassword
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    ports:
+      # For development, expose mariadb to host
+      - "3306:3306/tcp"
+    networks:
+      - backend
+    volumes:
+      - mariadb:/var/lib/mysql
+
   redis:
     image: redis:alpine
     container_name: redis
     restart: unless-stopped
-#    ports:
-#      # For development, expose redis to host
-#      - "6379:6379/tcp"
+    ports:
+      # For development, expose redis to host
+      - "6379:6379/tcp"
     networks:
       - backend
 
@@ -64,3 +84,10 @@ networks:
   backend:
     driver: bridge
   default:
+
+volumes:
+  mariadb:
+#    driver_opts:
+#      type: none
+#      device: /tmp/mariadb
+#      o: bind
