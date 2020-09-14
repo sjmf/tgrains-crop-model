@@ -94,7 +94,7 @@ def setup_db(_app, _db):
     # Connect to the database and create the tgrains database if it doesn't exist
     # We need to do this because SQLAlchemy won't do it for us.
     engine = create_engine('{0}://{1}:{2}@{3}:{4}'.format(m['proto'], m['user'], m['pass'], m['host'], m['port'] or '3306'))
-    engine.execute('CREATE DATABASE IF NOT EXISTS {1};'.format(m['db'] if 'db' in m else 'tgrains'))
+    engine.execute('CREATE DATABASE IF NOT EXISTS {0};'.format(m['db'] if 'db' in m.groupdict() else 'tgrains'))
     engine.dispose()
 
     with _app.app_context():
