@@ -143,12 +143,15 @@ def get_comments():
         page, size = (1, 5)
 
     # Pagination (load in pages)
-    query = Comment.query.order_by(Comment.id.desc())
-    comments = query.paginate(page, size, True).items
+    # Choose entities from model to load: exclude email, it should NEVER be returned to users
+    query = Comment.query \
+        .with_entities(Comment.id, Comment.author, Comment.reply_id, Comment.text, Comment.timestamp) \
+        .order_by(Comment.id.desc())
+    comments = query.paginate(page, size, True)
     length = query.count()
 
     return jsonify({
-        'comments': [i.as_dict() for i in comments],
+        'comments': [dict(zip([k['name'] for k in query.column_descriptions], [v for v in i])) for i in comments.items],
         'length': length,
         'page': page,
         'size': size
@@ -163,9 +166,18 @@ def post_comment():
     # ALWAYS escape text taken from user to prevent XSS scriptjacking attacks
     reply_id = None if 'reply_id' not in data else int(data['reply_id'])
 
+    # Sanity check input. None of the values are allowed to be empty strings
+    if not data['text'] or data['text'].isspace() or \
+        not data['author'] or data['author'].isspace() or \
+        not data['email'] or data['email'].isspace():
+
+        return "Bad request: empty comment fields are not allowed", 400
+
+    # Add the comment to the database
     db.session.add(Comment(
         text=escape(data['text']),
         author=escape(data['author']),
+        email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API
         reply_id=reply_id))
     db.session.commit()
 
@@ -198,5 +210,6 @@ if __name__ == "__main__":
     app.run(**{
         'host': '0.0.0.0',
         'debug': True,
+        # 'port': 8000
         #'threaded': True
     })
