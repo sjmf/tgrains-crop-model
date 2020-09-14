@@ -1,123 +1,32 @@
 #!/usr/bin/env python3
-import logging, os, pickle
-from datetime import datetime
-
+import logging
+import pickle
 import markdown
-from flask import Flask, Response, Blueprint, Markup, redirect, request, render_template, jsonify, url_for, escape
-from flask_redis import FlaskRedis
-from redis.exceptions import ConnectionError
-from celery import Celery
-from flask_sqlalchemy import SQLAlchemy
 
-HELP_STRING= "TGRAINS Server"
-with open('templates/docs.md', 'r') as file:
-    HELP_STRING = file.read()
+from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
+from redis.exceptions import ConnectionError
+
+from config import redis, db, Comment, create_app, make_celery
 
 # Set up logger
 log = logging.getLogger(__name__)
-
-# Create flask app
-app = Flask(__name__)
-
-# Set up configuration
-FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
-CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
-APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
-SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/') #'sqlite://')
+app = create_app()
+celery = make_celery(app)
 
 
-# Fix path when running behind a proxy (e.g. nginx, traefik, etc)
-if FLASK_ENV == 'production':
-    from werkzeug.middleware.proxy_fix import ProxyFix
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_port=1)
-
-# Redis cache URL
-HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))
-
+'''
+Application Routes
+'''
 # Look at end of file for where this blueprint is actually registered to the app
 crops = Blueprint('crops', __name__, template_folder='templates')
 
-app.config.from_object(__name__)
-
-# Setup Celery
-def make_celery(_app):
-
-    _celery = Celery(
-        _app.import_name,
-        backend=_app.config['CELERY_RESULT_BACKEND'],
-        broker=_app.config['CELERY_BROKER_URL']
-    )
-    _celery.conf.update(_app.config)
-
-    class ContextTask(_celery.Task):
-        def __call__(self, *args, **kwargs):
-            with _app.app_context():
-                return self.run(*args, **kwargs)
-
-    # noinspection PyPropertyAccess
-    _celery.Task = ContextTask
-    return _celery
-
-# Celery task queue details
-# Need to place this in app.config as config.from_object(__name__) already called above
-app.config['CELERY_BROKER_URL'] = REDIS_URL
-app.config['CELERY_RESULT_BACKEND'] = REDIS_URL
-celery = make_celery(app)
-
-# Create redis cache
-redis_client = FlaskRedis(app)
-
-# SQL Database connection parameters
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
-
-# SQLAlchemy comment class
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(140))
-    author = db.Column(db.String(32))
-    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True)
-    reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
-
-    def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-# Create SQLAlchemy DB in MySQL on first run
-if 'mysql' in SQLALCHEMY_DATABASE_URI:
-    db.engine.execute('CREATE DATABASE IF NOT EXISTS tgrains;')
-    db.engine.execute('USE tgrains;')
-db.create_all()
-
-
-# Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
-@app.after_request
-def after_request(response):
-    if FLASK_ENV == 'development':
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-    return response
-
-
-'''
-    Application Routes
-'''
-@crops.route('/', methods=['GET'])
-def index():
-    log.info(request)
-    return Response(Markup("<!DOCTYPE html>\n<title>CropModel</title>\n") \
-                    + Markup(markdown.markdown(HELP_STRING))) , 200
-
-
 # Development / debug routes. Not available in production
-if FLASK_ENV == 'development':
+if app.config['FLASK_ENV'] == 'development':
     @crops.route('/echo', methods=['GET', 'POST'])
     def echo():
         log.info(request.headers)
-        return Response("{}\n{}".format(str(request.headers), request.get_data().decode('utf-8')), mimetype='text/plain'), 200
+        return Response("{}\n{}".format(str(request.headers), request.get_data().decode('utf-8')),
+                        mimetype='text/plain'), 200
 
 
     @crops.route('/test', methods=['GET'])
@@ -126,15 +35,23 @@ if FLASK_ENV == 'development':
         return render_template('test.html')
 
 
+@crops.route('/', methods=['GET'])
+def index():
+    log.info(request)
+    return Response(Markup("<!DOCTYPE html>\n<title>CropModel</title>\n") \
+                    + Markup(markdown.markdown(app.config['HELP_STRING']))), 200
+
+
 @crops.route('model', methods=['POST'])
 def model_post():
-    #data = request.form.to_dict(flat=True)
+    # data = request.form.to_dict(flat=True)
     data = request.get_json()
     log.info(data)
 
-    task = celery.send_task('celery_model_run', kwargs={'data': data, 'landscape_id': data['landscape_id']}, expires=120)
+    task = celery.send_task('celery_model_run', kwargs={'data': data, 'landscape_id': data['landscape_id']},
+                            expires=120)
 
-    return jsonify({'task_id': task.id}), 303, {'Location': url_for('task_status', task_id=task.id)}
+    return jsonify({'task_id': task.id}), 303, {'Location': url_for('crops.task_status', task_id=task.id)}
 
 
 @crops.route('model', methods=['GET'])
@@ -155,7 +72,7 @@ def cached_task(task_name, landscape_id):
     redis_key = "flask:{0}:{1}".format(task_name, landscape_id)
 
     # Need only ever run celery task once per landscape ID: check for a stored key in Redis
-    exists = redis_client.get(redis_key)
+    exists = redis.get(redis_key)
     if exists:
         try:
             task = pickle.loads(exists)
@@ -176,7 +93,7 @@ def cached_task(task_name, landscape_id):
     # Cache the landscape ID against the task in Redis on first-run under key strings_get:101|102
     # Expires in 24h, same as the celery task - this means we won't need to check if the
     # task still exists because it'll expire automatically.
-    redis_client.setex(redis_key, 86400, value=pickle.dumps(task))
+    redis.setex(redis_key, 86400, value=pickle.dumps(task))
 
     # Return existing celery task which can be queried with /status
     return see_other_redirect(task)
@@ -184,10 +101,10 @@ def cached_task(task_name, landscape_id):
 
 # Helper function - redirect with HTTP 303 SEE OTHER
 def see_other_redirect(task):
-    return jsonify({'task_id': task.id}), 303, {'Location': url_for('task_status', task_id=task.id)}
+    return jsonify({'task_id': task.id}), 303, {'Location': url_for('crops.task_status', task_id=task.id)}
 
 
-@app.route('/status/<task_id>')
+@crops.route('/status/<task_id>')
 def task_status(task_id):
     task = celery.AsyncResult(task_id)
 
@@ -240,20 +157,23 @@ def get_comments():
 
 @crops.route('comment', methods=['POST'])
 def post_comment():
-    data = request.get_json()
+    data = request.get_json(force=True)
     log.info(data)
 
     # ALWAYS escape text taken from user to prevent XSS scriptjacking attacks
+    reply_id = None if 'reply_id' not in data else int(data['reply_id'])
+
     db.session.add(Comment(
         text=escape(data['text']),
         author=escape(data['author']),
-        reply_id=int(data['reply_id']) if 'reply_id' in data else None))
+        reply_id=reply_id))
     db.session.commit()
 
-    return redirect(url_for('get_comments'), code=303)
+    return redirect(url_for('crops.get_comments'), code=303)
+
 
 # Register blueprint to the app
-app.register_blueprint(crops, url_prefix=APPLICATION_ROOT)
+app.register_blueprint(crops, url_prefix=app.config['APPLICATION_ROOT'])
 
 
 '''
@@ -268,11 +188,11 @@ if __name__ != '__main__':
     Main. Does not run when running with WSGI
 '''
 if __name__ == "__main__":
-    strh = logging.StreamHandler() 
+    strh = logging.StreamHandler()
     strh.setLevel(logging.DEBUG)
     strh.setFormatter(logging.Formatter('[%(asctime)s - %(levelname)s] %(message)s'))
     log.addHandler(strh)
-    log.setLevel(logging.DEBUG) 
+    log.setLevel(logging.DEBUG)
 
     log.debug(app.url_map)
     app.run(**{
@@ -280,4 +200,3 @@ if __name__ == "__main__":
         'debug': True,
         #'threaded': True
     })
-

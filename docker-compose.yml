@@ -16,7 +16,7 @@ services:
     environment:
       - FLASK_ENV=production
       - REDIS_URL=redis://redis:6379/0
-      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/
+      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
     expose:
       - 5000
     networks:
