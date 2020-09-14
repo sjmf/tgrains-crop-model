@@ -59,6 +59,8 @@ Get comments from the database in paginated form. The following params control t
 
 Comments are returned as JSON.
 
+NB: Page counter starts at 1. Requesting page 0 results in 404 not found (from flask-sqlalchemy)
+
 
 ### [/comment](/comment?page=1&size=10)
 _Method:_ `POST`
@@ -68,6 +70,7 @@ JSON.
 
 * text: String. The comment body.
 * author: String. The author's name.
+* email: String. The author's email address (may be NULL for social medial login)
 
 POST body MAY also include the following variable:
 
