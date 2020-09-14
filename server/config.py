@@ -19,6 +19,10 @@ class Config:
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/tgrains') #'sqlite://')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    STRING_MAX_LENGTH_TEXTAREA=10000
+    STRING_MAX_LENGTH_AUTHOR=200
+    STRING_MAX_LENGTH_EMAIL=254
+
     HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))
     CELERY_BROKER_URL = REDIS_URL
@@ -32,10 +36,11 @@ class Config:
 # SQLAlchemy comment class
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(140))
-    author = db.Column(db.String(32))
-    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True)
+    text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA))
+    author = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
+    email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
     reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
+    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -88,12 +93,12 @@ def make_celery(_app):
 def setup_db(_app, _db):
     # Get SQL Database connection parameters
     # Capture groups for each part of connection string
-    p = re.compile('(?P<proto>[A-Za-z]+):\/\/(?P<user>.+):(?P<pass>.+)\@(?P<host>[A-Za-z0-9\.]+):?(?P<port>\d+)?\/(?P<db>.+)?$')
+    p = re.compile('^(?P<proto>[A-Za-z]+):\/\/(?P<user>.+):(?P<pass>.+)\@(?P<host>[A-Za-z0-9\.]+):?(?P<port>\d+)?\/(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
     m = p.match(_app.config['SQLALCHEMY_DATABASE_URI'])
 
     # Connect to the database and create the tgrains database if it doesn't exist
     # We need to do this because SQLAlchemy won't do it for us.
-    engine = create_engine('{0}://{1}:{2}@{3}:{4}'.format(m['proto'], m['user'], m['pass'], m['host'], m['port'] or '3306'))
+    engine = create_engine('{0}://{1}:{2}@{3}:{4}/?{5}'.format(m['proto'], m['user'], m['pass'], m['host'], m['port'] or '3306', m['params'] or 'charset=utf8mb4'))
     engine.execute('CREATE DATABASE IF NOT EXISTS {0};'.format(m['db'] if 'db' in m.groupdict() else 'tgrains'))
     engine.dispose()
 
