@@ -181,7 +181,7 @@ def post_comment():
         reply_id=reply_id))
     db.session.commit()
 
-    return redirect(url_for('crops.get_comments'), code=303)
+    return redirect(url_for('crops.get_comments', page=data['page'], size=data['size']), code=303)
 
 
 # Register blueprint to the app
