@@ -197,8 +197,11 @@ def get_tags():
     groups = [i[0] for i in query.group_by(Tags.group).with_entities(Tags.group)]
 
     return jsonify({
-        g: list(filter(lambda x: x['group'] == g, [i.as_dict() for i in query]))
-            for g in groups
+        'tags': [i.as_dict() for i in query],
+        'groups': {
+            g: [i['id'] for i in list(filter(lambda x: x['group'] == g, [i.as_dict() for i in query]))]
+                for g in groups
+        }
     })
 
 
