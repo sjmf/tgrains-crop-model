@@ -7,7 +7,7 @@ import hashlib
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
 
-from config import redis, db, Comment, create_app, make_celery
+from config import db, Comment, Tags, redis, create_app, make_celery
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -189,6 +189,17 @@ def post_comment():
     db.session.commit()
 
     return redirect(url_for('crops.get_comments', page=data['page'], size=data['size']), code=303)
+
+
+@crops.route('tags', methods=['GET'])
+def get_tags():
+    query = Tags.query.order_by(Tags.id)
+    groups = [i[0] for i in query.group_by(Tags.group).with_entities(Tags.group)]
+
+    return jsonify({
+        g: list(filter(lambda x: x['group'] == g, [i.as_dict() for i in query]))
+            for g in groups
+    })
 
 
 # Register blueprint to the app

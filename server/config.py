@@ -35,15 +35,30 @@ class Config:
         HELP_STRING = file.read()
 
 
+
+def _as_dict_impl(self):
+    return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 # SQLAlchemy comment class
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA))
-    author = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
-    hash = db.Column(db.String(64))
-    email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
+    text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA), nullable=False)
+    author = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR), nullable=False)
+    hash = db.Column(db.String(64), nullable=False)
+    email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL), nullable=False)
     reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
-    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
+
+    as_dict = _as_dict_impl
+
+# SQLAlchemy Tags class
+class Tags(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    group = db.Column(db.Integer, nullable=False)
+    # description = db.Column()
+
+    as_dict = _as_dict_impl
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

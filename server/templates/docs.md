@@ -75,3 +75,9 @@ JSON.
 POST body MAY also include the following variable:
 
 * reply_id: Integer. The comment that this comment is replying to.
+
+
+### [/tags](/tags)
+_Method:_ `GET`
+
+Retrieve comment tags from the database.
