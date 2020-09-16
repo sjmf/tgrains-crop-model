@@ -19,9 +19,11 @@ class Config:
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/tgrains') #'sqlite://')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     STRING_MAX_LENGTH_TEXTAREA=10000
     STRING_MAX_LENGTH_AUTHOR=200
     STRING_MAX_LENGTH_EMAIL=254
+    HASH_SALT = os.environ.get('HASH_SALT', 'salt.9yA8Uf5j4%1hr65Y1f8h1YGT1hj')
 
     HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))
@@ -38,6 +40,7 @@ class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA))
     author = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
+    hash = db.Column(db.String(64))
     email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
     reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True)

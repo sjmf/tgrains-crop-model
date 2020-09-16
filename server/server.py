@@ -2,6 +2,7 @@
 import logging
 import pickle
 import markdown
+import hashlib
 
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
@@ -142,17 +143,22 @@ def get_comments():
         log.error(e)
         page, size = (1, 5)
 
-    # Pagination (load in pages)
-    # Choose entities from model to load: exclude email, it should NEVER be returned to users
+    # Choose entities from model to load, excluding email, it should NEVER be returned to users:
     query = Comment.query \
-        .with_entities(Comment.id, Comment.author, Comment.reply_id, Comment.text, Comment.timestamp) \
+        .with_entities(Comment.id, Comment.hash, Comment.author, Comment.reply_id, Comment.text, Comment.timestamp) \
         .order_by(Comment.id.desc())
-    comments = query.paginate(page, size, True)
-    length = query.count()
+
+    # Pagination (load in pages)
+    comments = query.paginate(page, size, True).items
+    items = [dict(zip([k['name'] for k in query.column_descriptions], [v for v in i])) for i in comments]
+    #items = [i.as_dict() for i in comments]
+
+    for i in items:
+        i['timestamp'] = i['timestamp'].timestamp()
 
     return jsonify({
-        'comments': [dict(zip([k['name'] for k in query.column_descriptions], [v for v in i])) for i in comments.items],
-        'length': length,
+        'comments': items,
+        'length': query.count(),
         'page': page,
         'size': size
     })
@@ -178,6 +184,7 @@ def post_comment():
         text=escape(data['text']),
         author=escape(data['author']),
         email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API
+        hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
         reply_id=reply_id))
     db.session.commit()
 
