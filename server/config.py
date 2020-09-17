@@ -49,6 +49,8 @@ class Comment(db.Model):
     reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
 
+    tags = db.relationship("CommentTags", backref="comment")
+
     as_dict = _as_dict_impl
 
 # SQLAlchemy Tags class
@@ -56,12 +58,14 @@ class Tags(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     group = db.Column(db.Integer, nullable=False)
-    # description = db.Column()
 
     as_dict = _as_dict_impl
 
-    def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+# SQLAlchemy CommentTags class
+class CommentTags(db.Model):
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), primary_key=True)
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
+
 
 
 # Factory function for flask app

@@ -7,7 +7,7 @@ import hashlib
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
 
-from config import db, Comment, Tags, redis, create_app, make_celery
+from config import db, Comment, Tags, CommentTags, redis, create_app, make_celery
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -144,17 +144,18 @@ def get_comments():
         page, size = (1, 5)
 
     # Choose entities from model to load, excluding email, it should NEVER be returned to users:
-    query = Comment.query \
-        .with_entities(Comment.id, Comment.hash, Comment.author, Comment.reply_id, Comment.text, Comment.timestamp) \
-        .order_by(Comment.id.desc())
+    query = Comment.query.order_by(Comment.id.desc())
 
     # Pagination (load in pages)
     comments = query.paginate(page, size, True).items
-    items = [dict(zip([k['name'] for k in query.column_descriptions], [v for v in i])) for i in comments]
-    #items = [i.as_dict() for i in comments]
+    #items = [dict(zip([k['name'] for k in query.column_descriptions], [v for v in i])) for i in comments]
+    items = [i.as_dict() for i in comments]
 
-    for i in items:
-        i['timestamp'] = i['timestamp'].timestamp()
+    for i,c in enumerate(items):
+        c['timestamp'] = c['timestamp'].timestamp()
+        c['tags'] = [t.tag_id for t in list(comments[i].tags)]
+
+        del c['email']
 
     return jsonify({
         'comments': items,
@@ -180,12 +181,20 @@ def post_comment():
         return "Bad request: empty comment fields are not allowed", 400
 
     # Add the comment to the database
-    db.session.add(Comment(
+    comment = Comment(
         text=escape(data['text']),
         author=escape(data['author']),
         email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API
         hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
-        reply_id=reply_id))
+        reply_id=reply_id)
+
+    # Retrieve tags from request and store as rows in CommentTags table
+    db.session.add(comment)
+    db.session.flush() # Generate PKs
+
+    for tag_id in data['tags']:
+        db.session.add(CommentTags(comment_id=comment.id, tag_id=tag_id))
+
     db.session.commit()
 
     return redirect(url_for('crops.get_comments', page=data['page'], size=data['size']), code=303)
