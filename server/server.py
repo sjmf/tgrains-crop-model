@@ -7,13 +7,16 @@ import hashlib
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
 
-from config import db, Comment, Tags, CommentTags, redis, create_app, make_celery
+from config import redis, create_app, make_celery
+from database import setup_db, db, Comments, Tags, CommentTags
 
 # Set up logger
 log = logging.getLogger(__name__)
 app = create_app()
 celery = make_celery(app)
 
+db.init_app(app)
+setup_db(app, db)
 
 '''
 Application Routes
@@ -144,7 +147,7 @@ def get_comments():
         page, size = (1, 5)
 
     # Choose entities from model to load, excluding email, it should NEVER be returned to users:
-    query = Comment.query.order_by(Comment.id.desc())
+    query = Comments.query.order_by(Comments.id.desc())
 
     # Pagination (load in pages)
     comments = query.paginate(page, size, True).items
@@ -181,7 +184,7 @@ def post_comment():
         return "Bad request: empty comment fields are not allowed", 400
 
     # Add the comment to the database
-    comment = Comment(
+    comment = Comments(
         text=escape(data['text']),
         author=escape(data['author']),
         email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API

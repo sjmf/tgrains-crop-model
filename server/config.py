@@ -5,12 +5,10 @@ from datetime import datetime
 from celery import Celery
 from flask import Flask
 from flask_redis import FlaskRedis
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 
 # Globally accessible names
 redis = FlaskRedis()
-db = SQLAlchemy()
 
 # Set up class for configuration
 class Config:
@@ -35,47 +33,12 @@ class Config:
         HELP_STRING = file.read()
 
 
-
-def _as_dict_impl(self):
-    return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-# SQLAlchemy comment class
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA), nullable=False)
-    author = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR), nullable=False)
-    hash = db.Column(db.String(64), nullable=False)
-    email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL), nullable=False)
-    reply_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
-    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
-
-    tags = db.relationship("CommentTags", backref="comment")
-
-    as_dict = _as_dict_impl
-
-# SQLAlchemy Tags class
-class Tags(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    group = db.Column(db.Integer, nullable=False)
-
-    as_dict = _as_dict_impl
-
-# SQLAlchemy CommentTags class
-class CommentTags(db.Model):
-    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), primary_key=True)
-    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
-
-
-
 # Factory function for flask app
 def create_app(config_class=Config):
     _app = Flask(__name__)
     _app.config.from_object(config_class)
 
     redis.init_app(_app)
-    db.init_app(_app)
-    setup_db(_app, db)
 
     # Fix path when running behind a proxy (e.g. nginx, traefik, etc)
     if _app.config['FLASK_ENV'] == 'production':
@@ -109,20 +72,3 @@ def make_celery(_app):
     # noinspection PyPropertyAccess
     _celery.Task = ContextTask
     return _celery
-
-
-# Setup database
-def setup_db(_app, _db):
-    # Get SQL Database connection parameters
-    # Capture groups for each part of connection string
-    p = re.compile('^(?P<proto>[A-Za-z]+):\/\/(?P<user>.+):(?P<pass>.+)\@(?P<host>[A-Za-z0-9\.]+):?(?P<port>\d+)?\/(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
-    m = p.match(_app.config['SQLALCHEMY_DATABASE_URI'])
-
-    # Connect to the database and create the tgrains database if it doesn't exist
-    # We need to do this because SQLAlchemy won't do it for us.
-    engine = create_engine('{0}://{1}:{2}@{3}:{4}/?{5}'.format(m['proto'], m['user'], m['pass'], m['host'], m['port'] or '3306', m['params'] or 'charset=utf8mb4'))
-    engine.execute('CREATE DATABASE IF NOT EXISTS {0};'.format(m['db'] if 'db' in m.groupdict() else 'tgrains'))
-    engine.dispose()
-
-    with _app.app_context():
-        _db.create_all()
