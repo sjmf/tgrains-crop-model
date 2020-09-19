@@ -81,3 +81,9 @@ POST body MAY also include the following variable:
 _Method:_ `GET`
 
 Retrieve comment tags from the database.
+
+
+### [/reply](/reply?id=1)
+_Method:_ `GET`
+
+Retrieve a comment by ID (used for getting replies)

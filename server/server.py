@@ -158,6 +158,9 @@ def get_comments():
         c['timestamp'] = c['timestamp'].timestamp()
         c['tags'] = [t.tag_id for t in list(comments[i].tags)]
 
+        if c['reply_id']:
+            c['reply'] = Comments.query.filter_by(id=c['reply_id']).first().as_dict()
+
         del c['email']
 
     return jsonify({
@@ -166,6 +169,12 @@ def get_comments():
         'page': page,
         'size': size
     })
+
+
+@crops.route('reply', methods=['GET'])
+def load_comment_by_id():
+    reply_id = request.args.get('id')
+    return jsonify(Comments.query.filter_by(id=reply_id).first().as_dict())
 
 
 @crops.route('comment', methods=['POST'])
