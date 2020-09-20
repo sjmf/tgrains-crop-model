@@ -66,7 +66,7 @@ def setup_db(_app, _db):
 
     # Get SQL Database connection parameters
     # Capture groups for each part of connection string
-    p = re.compile('^(?P<proto>[A-Za-z]+):\/\/(?P<user>.+):(?P<pass>.+)\@(?P<host>[A-Za-z0-9\.]+):?(?P<port>\d+)?\/(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
+    p = re.compile('^(?P<proto>[A-Za-z]+)://(?P<user>.+):(?P<pass>.+)@(?P<host>[A-Za-z0-9.]+):?(?P<port>\d+)?/(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
     m = p.match(_app.config['SQLALCHEMY_DATABASE_URI'])
 
     # Connect to the database and create the tgrains database if it doesn't exist
@@ -78,12 +78,12 @@ def setup_db(_app, _db):
 
     with _app.app_context():
         _db.create_all()
-        _insert_tags(_db, engine, db_name)
+        _insert_tags(_db, engine)
 
     engine.dispose()
 
 
-def _insert_tags(_db, _engine, db_name):
+def _insert_tags(_db, _engine):
     # Count tags in database
     count = _engine.execute('SELECT COUNT(*) FROM {0};'.format(Tags.__table__)).fetchall()[0][0]
 
