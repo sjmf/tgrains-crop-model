@@ -146,12 +146,11 @@ def get_comments():
         log.error(e)
         page, size = (1, 5)
 
-    # Choose entities from model to load, excluding email, it should NEVER be returned to users:
+    # Query model
     query = Comments.query.order_by(Comments.id.desc())
 
     # Pagination (load in pages)
     comments = query.paginate(page, size, True).items
-    #items = [dict(zip([k['name'] for k in query.column_descriptions], [v for v in i])) for i in comments]
     items = [i.as_dict() for i in comments]
 
     for i,c in enumerate(items):
@@ -159,7 +158,7 @@ def get_comments():
         c['tags'] = [t.tag_id for t in list(comments[i].tags)]
 
         if c['reply_id']:
-            c['reply'] = Comments.query.filter_by(id=c['reply_id']).first().as_dict()
+            c['reply'] = get_single_comment(c['reply_id'])
 
         del c['email']
 
@@ -173,9 +172,16 @@ def get_comments():
 
 @crops.route('reply', methods=['GET'])
 def load_comment_by_id():
-    reply_id = request.args.get('id')
-    return jsonify(Comments.query.filter_by(id=reply_id).first().as_dict())
+    return jsonify(get_single_comment(request.args.get('id')))
 
+def get_single_comment(reply_id):
+    query = Comments.query.filter_by(id=reply_id)
+    comment = query.first().as_dict()
+    comment['timestamp'] = comment['timestamp'].timestamp()
+    comment['tags'] = [t.tag_id for t in list(query.first().tags)]
+    del comment['email']
+
+    return comment
 
 @crops.route('comment', methods=['POST'])
 def post_comment():
