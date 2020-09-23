@@ -30,7 +30,7 @@ class Comments(db.Model):
 
     # JSON in MariaDB is just a LONGTEXT alias (holds 2^32 chars or 4GB data)
     # TEXT column holds 65,535 (2^16 - 1) characters or 64kb of data. Better for DoS attack protection!
-    state_json = db.Column(db.Text)
+    state = db.Column(db.Text)
 
     as_dict = _as_dict_impl
 

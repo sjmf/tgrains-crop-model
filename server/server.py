@@ -3,6 +3,7 @@ import logging
 import pickle
 import markdown
 import hashlib
+import json
 
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
@@ -160,6 +161,10 @@ def get_comments():
         if c['reply_id']:
             c['reply'] = get_single_comment(c['reply_id'])
 
+        if c['state']:
+            log.info(c['state'])
+            c['state'] = json.loads(c['state'])
+
         del c['email']
 
     return jsonify({
@@ -204,7 +209,9 @@ def post_comment():
         author=escape(data['author']),
         email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API
         hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
-        reply_id=reply_id)
+        state_json=json.dumps(data['state']),
+        reply_id=reply_id
+    )
 
     # Retrieve tags from request and store as rows in CommentTags table
     db.session.add(comment)
