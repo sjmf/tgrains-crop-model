@@ -209,7 +209,7 @@ def post_comment():
         author=escape(data['author']),
         email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API
         hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
-        state_json=json.dumps(data['state']),
+        state=json.dumps(data['state']),
         reply_id=reply_id
     )
 
