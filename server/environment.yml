@@ -1,0 +1,16 @@
+name: tgrains
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - cppyy
+  - flask
+  - markdown
+  - gunicorn
+  - celery
+  - redis
+  - redis-py
+  - flask-redis
+  - sqlalchemy=1.3.18
+  - flask-sqlalchemy
+  - mysqlclient

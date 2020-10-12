@@ -13,6 +13,7 @@ services:
 # does COPY . /app, but it helps for development!
 #    volumes:
 #      - "${PWD}/server/:/app"
+#    command: gunicorn --worker-tmp-dir /dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout 120 --bind 0.0.0.0:5000 'server:app'
     environment:
       - FLASK_ENV=production
       - REDIS_URL=redis://redis:6379/0
@@ -31,8 +32,8 @@ services:
 # does COPY . /app, but it helps for development!
 #    volumes:
 #      - "${PWD}/server/:/app"
-    command: /bin/sh -c "celery worker -A tasks.celery --loglevel=INFO --concurrency=8"
-    working_dir: /app/
+    command: celery worker -A tasks.celery --loglevel=INFO --concurrency=8
+#    working_dir: /app/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
