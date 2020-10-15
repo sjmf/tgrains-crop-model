@@ -1,37 +1,42 @@
-FROM ubuntu:focal
+FROM continuumio/miniconda3:4.8.2 as build
 MAINTAINER Samantha Finnigan
 WORKDIR /app
 
-# set environment variables
+# https://pythonspeed.com/articles/conda-docker-image-size/
+# Create the environment:
+COPY environment.yml .
+RUN conda env create -f environment.yml
+
+# Install conda-pack:
+RUN conda install -c conda-forge conda-pack \
+    && conda clean -afy
+
+# Use conda-pack to create a standalone enviornment
+# in /venv:
+RUN conda-pack -n tgrains -o /tmp/env.tar && \
+  mkdir /venv && cd /venv && tar xf /tmp/env.tar && \
+  rm /tmp/env.tar
+
+# We've put venv in same path it'll be in final image,
+# so now fix up paths:
+RUN /venv/bin/conda-unpack
+
+
+# Build multistage image for runtime
+FROM ubuntu:focal as runtime
+WORKDIR /app
+
+# set environment variables (don't buffer stdout, don't write bytecode)
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Install dependencies via apt
 RUN apt-get update &&\
-    apt-get install -y build-essential wget g++ libgfortran5 libboost-serialization1.71.0 &&\
+    apt-get install -y libgfortran5 libboost-serialization1.71.0 &&\
     rm -rf /var/lib/apt/lists/*
 
-# Install Conda. Taken from miniconda3 Dockerfile
-ENV PATH=/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh &&\
-    /bin/bash ~/miniconda.sh -b -p /opt/conda &&\
-    rm ~/miniconda.sh &&\
-    /opt/conda/bin/conda clean -tipsy &&\
-    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh &&\
-    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc &&\
-    echo "conda activate base" >> ~/.bashrc &&\
-    find /opt/conda/ -follow -type f -name '*.a' -delete &&\
-    find /opt/conda/ -follow -type f -name '*.js.map' -delete &&\
-    /opt/conda/bin/conda clean -afy
-
-# https://pythonspeed.com/articles/activate-conda-dockerfile/
-# Create the environment:
-COPY environment.yml .
-RUN conda env create -f environment.yml
-
-# COPY ./requirements.txt /app/requirements.txt
-# RUN . /opt/conda/etc/profile.d/conda.sh &&\
-#      conda install -c conda-forge --file requirements.txt
+# Copy /venv from the build stage
+COPY --from=build /venv /venv
 
 # Copy rest of app environment
 COPY . /app
@@ -42,13 +47,13 @@ RUN mkdir /OutFiles
 
 EXPOSE 5000
 
-# Use entrypoint to run commands under conda environment
-# conda run -n tgrains /bin/bash -c
-ENTRYPOINT ["conda", "run", "-n", "tgrains"]
+RUN touch /app/run.sh && chmod +x /app/run.sh && echo 'source /venv/bin/activate && $*' > /app/run.sh
 
-CMD gunicorn --worker-tmp-dir /dev/shm \
-            --workers=2 --threads=4 --worker-class=gthread \
-            --timeout 120 --log-file=- \
-            --bind 0.0.0.0:5000 'server:app'
+# Use entrypoint to run commands under environment
+SHELL ["/bin/bash", "-c"]
+ENTRYPOINT ["/bin/bash", "/app/run.sh"]
 
+CMD ["gunicorn", "--worker-tmp-dir=/dev/shm", "--workers=2", "--threads=4", "--worker-class=gthread", "--timeout=120", "--log-file=-", "--bind=0.0.0.0:5000", "server:app"]
+
+#CMD gunicorn --worker-tmp-dir=/dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout=120 --log-file=- --bind=0.0.0.0:5000 server:app
 #CMD celery worker -A tasks.celery --loglevel=INFO --concurrency=8
