@@ -1,0 +1,90 @@
+version: '3.6'
+
+services:
+  gunicorn:
+    image: samfinnigan/tgrains-cropmodel-backend:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_gunicorn
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - celery
+    environment:
+      - FLASK_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
+    expose:
+      - 5000
+    networks:
+      - backend
+
+  celery:
+    image: samfinnigan/tgrains-cropmodel-backend:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_celery
+    restart: unless-stopped
+    command: celery worker -A tasks.celery --loglevel=INFO --concurrency=8
+    working_dir: /app/
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    networks:
+      - backend
+
+  mariadb:
+    image: mariadb
+    container_name: ${COMPOSE_PROJECT_NAME}_mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=devpassword
+      - MYSQL_DATABASE=tgrains
+      - MYSQL_USER=flask
+      - MYSQL_PASSWORD=sqlalchemy_devpassword
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    ports:
+      # For development, expose mariadb to host
+      - "3306:3306/tcp"
+    networks:
+      - backend
+    volumes:
+      - mariadb:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    container_name: ${COMPOSE_PROJECT_NAME}_redis
+    restart: unless-stopped
+    networks:
+      - backend
+
+  frontend:
+    image: samfinnigan/tgrains-cropmodel-frontend
+    container_name: ${COMPOSE_PROJECT_NAME}_nginx
+    restart: unless-stopped
+    depends_on:
+      - gunicorn
+    ports:
+      # For development, expose frontend to host
+      - "8000:80/tcp"
+    networks:
+      - backend
+      - default
+      - external
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=webs_traefik"
+      - "traefik.http.routers.cropmodel-http.entrypoints=http"
+      - "traefik.http.routers.cropmodel-http.rule=Host(`model.tgrains.com`)"
+      - "traefik.http.routers.cropmodel-http.middlewares=httpsRedirect@file"
+      - "traefik.http.routers.cropmodel.entrypoints=https"
+      - "traefik.http.routers.cropmodel.rule=Host(`model.tgrains.com`)"
+      - "traefik.http.routers.cropmodel.tls=true"
+      - "traefik.http.routers.cropmodel.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.cropmodel.middlewares=secured@file"
+      - "traefik.http.services.cropmodel.loadbalancer.server.port=80"
+
+networks:
+  backend:
+  default:
+  external:
+    name: webs_traefik
+
+volumes:
+  mariadb:
