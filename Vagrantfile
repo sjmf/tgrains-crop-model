@@ -79,18 +79,14 @@ Vagrant.configure("2") do |config|
   # Example for VirtualBox:
   #
   config.vm.provider "virtualbox" do |vb|
-      # Display the VirtualBox GUI when booting the machine
-      #vb.gui = true
-
-      # Customize the amount of memory on the VM:
-      vb.memory = "4096"
-
-      #
       # View the documentation for the provider you are using for more
       # information on available options.
 
-      # Configure virtual memory allocation need more than 1024 for Boost compilation
-      vb.memory = 4096
+      # Display the VirtualBox GUI when booting the machine
+      #vb.gui = true
+
+      # Configure virtual memory allocation
+      vb.memory = 2048
       vb.cpus = 2
 
       # ubuntu/focal64 image currently suffering from a bug which makes it slow to boot.
@@ -182,24 +178,24 @@ EOF
 EOF
 
 
-    echo $BORDER
-    echo "Installing Docker"
-
-    if hash docker 2>/dev/null; then
-        echo "Docker already installed :)"
-    else
-        apt-get -y install apt-transport-https ca-certificates curl software-properties-common
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-        apt-get update
-        apt-cache policy docker-ce
-
-        apt-get -y install docker-ce
-        systemctl status docker
-        usermod -aG docker vagrant
-
-        apt-get install -y docker-compose
-    fi
+#     echo $BORDER
+#     echo "Installing Docker"
+#
+#     if hash docker 2>/dev/null; then
+#         echo "Docker already installed :)"
+#     else
+#         apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+#         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+#         add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+#         apt-get update
+#         apt-cache policy docker-ce
+#
+#         apt-get -y install docker-ce
+#         systemctl status docker
+#         usermod -aG docker vagrant
+#
+#         apt-get install -y docker-compose
+#     fi
 
   SHELL
 end
