@@ -1,4 +1,5 @@
-import re, logging
+import re
+import logging
 from datetime import datetime
 
 from config import Config
@@ -13,8 +14,10 @@ strh.setFormatter(logging.Formatter('[%(asctime)s - %(levelname)s] %(message)s')
 log.addHandler(strh)
 log.setLevel(logging.DEBUG)
 
+
 def _as_dict_impl(self):
     return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 # SQLAlchemy comment class
 class Comments(db.Model):
@@ -34,6 +37,7 @@ class Comments(db.Model):
 
     as_dict = _as_dict_impl
 
+
 # SQLAlchemy Tags class
 class Tags(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,12 +46,15 @@ class Tags(db.Model):
 
     as_dict = _as_dict_impl
 
+
 # SQLAlchemy CommentTags class
 class CommentTags(db.Model):
     comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), primary_key=True)
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 
 
+# ==================
+# Methods
 
 # Setup database
 def setup_db(_app, _db):
@@ -56,12 +63,21 @@ def setup_db(_app, _db):
 
     # Get SQL Database connection parameters
     # Capture groups for each part of connection string
-    p = re.compile('^(?P<proto>[A-Za-z]+)://(?P<user>.+):(?P<pass>.+)@(?P<host>[A-Za-z0-9.]+):?(?P<port>\d+)?/(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
+    p = re.compile(r'^(?P<proto>[A-Za-z]+)://(?P<user>.+):(?P<pass>.+)@'
+                   r'(?P<host>[A-Za-z0-9.]+):?(?P<port>\d+)?/'
+                   r'(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
     m = p.match(_app.config['SQLALCHEMY_DATABASE_URI'])
 
     # Connect to the database and create the tgrains database if it doesn't exist
     # We need to do this because SQLAlchemy won't do it for us.
-    engine = create_engine('{0}://{1}:{2}@{3}:{4}/?{5}'.format(m['proto'], m['user'], m['pass'], m['host'], m['port'] or '3306', m['params'] or 'charset=utf8mb4'))
+    engine = create_engine('{0}://{1}:{2}@{3}:{4}/?{5}'.format(
+        m['proto'],
+        m['user'],
+        m['pass'],
+        m['host'],
+        m['port'] or '3306',
+        m['params'] or 'charset=utf8mb4')
+    )
     db_name = m['db'] if 'db' in m.groupdict() else 'tgrains'
     engine.execute('CREATE DATABASE IF NOT EXISTS {0};'.format(db_name))
     engine.execute('USE {0};'.format(db_name))
@@ -154,5 +170,5 @@ TAGS = [
     (59, 'Stroke', 5),
     (60, 'Cancer', 5),
     (61, 'Heart Disease', 5),
-    (62, 'Diabetes', 5)
+    (62, 'Diabetes', 5),
 ]

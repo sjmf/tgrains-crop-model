@@ -1,26 +1,24 @@
 import os
-import re
-from datetime import datetime
 
 from celery import Celery
 from flask import Flask
 from flask_redis import FlaskRedis
-from sqlalchemy import create_engine
 
 # Globally accessible names
 redis = FlaskRedis()
+
 
 # Set up class for configuration
 class Config:
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
     CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/tgrains') #'sqlite://')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/tgrains')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    STRING_MAX_LENGTH_TEXTAREA=10000
-    STRING_MAX_LENGTH_AUTHOR=200
-    STRING_MAX_LENGTH_EMAIL=254
+    STRING_MAX_LENGTH_TEXTAREA = 10000
+    STRING_MAX_LENGTH_AUTHOR = 200
+    STRING_MAX_LENGTH_EMAIL = 254
     HASH_SALT = os.environ.get('HASH_SALT', 'salt.9yA8Uf5j4%1hr65Y1f8h1YGT1hj')
 
     HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
@@ -28,7 +26,6 @@ class Config:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
 
-    HELP_STRING = "TGRAINS Server"
     with open('templates/docs.md', 'r') as file:
         HELP_STRING = file.read()
 
@@ -60,8 +57,8 @@ def create_app(config_class=Config):
 # Setup Celery
 def make_celery(_app):
     _celery = Celery(_app.import_name,
-                    backend=_app.config['CELERY_RESULT_BACKEND'],
-                    broker=_app.config['CELERY_BROKER_URL'])
+                     backend=_app.config['CELERY_RESULT_BACKEND'],
+                     broker=_app.config['CELERY_BROKER_URL'])
     _celery.conf.update(_app.config)
 
     class ContextTask(_celery.Task):

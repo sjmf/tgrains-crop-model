@@ -43,7 +43,7 @@ if app.config['FLASK_ENV'] == 'development':
 @crops.route('/', methods=['GET'])
 def index():
     log.info(request)
-    return Response(Markup("<!DOCTYPE html>\n<title>CropModel</title>\n") \
+    return Response(Markup("<!DOCTYPE html>\n<title>CropModel</title>\n")
                     + Markup(markdown.markdown(app.config['HELP_STRING']))), 200
 
 
@@ -154,7 +154,7 @@ def get_comments():
     comments = query.paginate(page, size, True).items
     items = [i.as_dict() for i in comments]
 
-    for i,c in enumerate(items):
+    for i, c in enumerate(items):
         c['timestamp'] = c['timestamp'].timestamp()
         c['tags'] = [t.tag_id for t in list(comments[i].tags)]
 
@@ -179,6 +179,7 @@ def get_comments():
 def load_comment_by_id():
     return jsonify(get_single_comment(request.args.get('id')))
 
+
 def get_single_comment(reply_id):
     query = Comments.query.filter_by(id=reply_id)
     comment = query.first().as_dict()
@@ -187,6 +188,7 @@ def get_single_comment(reply_id):
     del comment['email']
 
     return comment
+
 
 @crops.route('comment', methods=['POST'])
 def post_comment():
@@ -198,8 +200,8 @@ def post_comment():
 
     # Sanity check input. None of the values are allowed to be empty strings
     if not data['text'] or data['text'].isspace() or \
-        not data['author'] or data['author'].isspace() or \
-        not data['email'] or data['email'].isspace():
+            not data['author'] or data['author'].isspace() or \
+            not data['email'] or data['email'].isspace():
 
         return "Bad request: empty comment fields are not allowed", 400
 
@@ -215,7 +217,7 @@ def post_comment():
 
     # Retrieve tags from request and store as rows in CommentTags table
     db.session.add(comment)
-    db.session.flush() # Generate PKs
+    db.session.flush()      # Generate PKs
 
     for tag_id in data['tags']:
         db.session.add(CommentTags(comment_id=comment.id, tag_id=tag_id))
@@ -234,7 +236,7 @@ def get_tags():
         'tags': [i.as_dict() for i in query],
         'groups': {
             g: [i['id'] for i in list(filter(lambda x: x['group'] == g, [i.as_dict() for i in query]))]
-                for g in groups
+            for g in groups
         }
     })
 
@@ -266,5 +268,5 @@ if __name__ == "__main__":
         'host': '0.0.0.0',
         'debug': True,
         # 'port': 8000
-        #'threaded': True
+        # 'threaded': True
     })
