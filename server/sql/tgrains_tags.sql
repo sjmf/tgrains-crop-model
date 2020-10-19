@@ -1,62 +1,64 @@
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (1, 'Small Business', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (2, 'Food Poverty', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (3, 'Consumption', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (4, 'Social Media', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (5, 'Education', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (6, 'Regulation', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (7, 'Government', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (8, 'Capitalism', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (9, 'Profits', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (10, 'Middle-actors', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (11, 'Wholesalers', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (12, 'Climate Change', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (13, 'Waste', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (14, 'Packaging', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (15, 'Expertise', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (16, 'Experience', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (17, 'Organic', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (18, 'No-Till', 0);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (19, 'Soft fruit', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (20, 'Peas & Beans', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (21, 'Oats', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (22, 'Sugar Beet', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (23, 'Barley', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (24, 'Maize', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (25, 'Wheat', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (26, 'Vegetables', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (27, 'Oilseed Rape', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (28, 'Potatoes', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (29, 'Top fruit', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (30, 'Dairy Cattle', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (31, 'Beef Cattle', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (32, 'Chicken', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (33, 'Pork', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (34, 'Egg Production', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (35, 'Lowland Lamb', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (36, 'Upland Lamb', 1);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (37, 'Production', 2);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (38, 'Greenhouse Gas Emissions', 2);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (39, 'Nitrogen Leaching', 2);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (40, 'Profit', 2);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (41, 'Calorie Production', 2);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (42, 'Pesticide Impacts', 3);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (43, 'Ground Water', 3);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (44, 'Fish', 3);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (45, 'Birds', 3);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (46, 'Bees', 3);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (47, 'Beneficial Arthropods', 3);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (48, 'Nutrition', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (49, 'Vegetables', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (50, 'Tubers', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (51, 'Whole Grains', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (52, 'Plant Protein', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (53, 'Animal Protein', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (54, 'Added Sugars', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (55, 'Added Fats', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (56, 'Dairy', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (57, 'Fruit', 4);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (58, 'Health', 5);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (59, 'Stroke', 5);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (60, 'Cancer', 5);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (61, 'Heart Disease', 5);
-INSERT INTO tgrains.tags (id, name, `group`) VALUES (62, 'Diabetes', 5);
+INSERT INTO tgrains.tags (id, name, `group`) VALUES
+(1, 'Business-as-usual', -1),
+(2, 'Small Business', 0),
+(3, 'Food Poverty', 0),
+(4, 'Consumption', 0),
+(5, 'Social Media', 0),
+(6, 'Education', 0),
+(7, 'Regulation', 0),
+(8, 'Government', 0),
+(9, 'Capitalism', 0),
+(10, 'Profits', 0),
+(11, 'Middle-actors', 0),
+(12, 'Wholesalers', 0),
+(13, 'Climate Change', 0),
+(14, 'Waste', 0),
+(15, 'Packaging', 0),
+(16, 'Expertise', 0),
+(17, 'Experience', 0),
+(18, 'Organic', 0),
+(19, 'No-Till', 0),
+(20, 'Soft fruit', 1),
+(21, 'Peas & Beans', 1),
+(22, 'Oats', 1),
+(23, 'Sugar Beet', 1),
+(24, 'Barley', 1),
+(25, 'Maize', 1),
+(26, 'Wheat', 1),
+(27, 'Vegetables', 1),
+(28, 'Oilseed Rape', 1),
+(29, 'Potatoes', 1),
+(30, 'Top fruit', 1),
+(31, 'Dairy Cattle', 1),
+(32, 'Beef Cattle', 1),
+(33, 'Chicken', 1),
+(34, 'Pork', 1),
+(35, 'Egg Production', 1),
+(36, 'Lowland Lamb', 1),
+(37, 'Upland Lamb', 1),
+(38, 'Production', 2),
+(39, 'Greenhouse Gas Emissions', 2),
+(40, 'Nitrogen Leaching', 2),
+(41, 'Profit', 2),
+(42, 'Calorie Production', 2),
+(43, 'Pesticide Impacts', 3),
+(44, 'Ground Water', 3),
+(45, 'Fish', 3),
+(46, 'Birds', 3),
+(47, 'Bees', 3),
+(48, 'Beneficial Arthropods', 3),
+(49, 'Nutrition', 4),
+(50, 'Vegetables', 4),
+(51, 'Tubers', 4),
+(52, 'Whole Grains', 4),
+(53, 'Plant Protein', 4),
+(54, 'Animal Protein', 4),
+(55, 'Added Sugars', 4),
+(56, 'Added Fats', 4),
+(57, 'Dairy', 4),
+(58, 'Fruit', 4),
+(59, 'Health', 5),
+(60, 'Stroke', 5),
+(61, 'Cancer', 5),
+(62, 'Heart Disease', 5),
+(63, 'Diabetes', 5);
