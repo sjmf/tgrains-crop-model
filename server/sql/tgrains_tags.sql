@@ -1,6 +1,7 @@
 INSERT INTO tgrains.tags (id, name, `group`) VALUES
 (1, 'Business-as-usual', -1),
 (2, 'Loaded', -2),
+(3, 'Restored', -2),
 (10, 'Small Business', 0),
 (11, 'Food Poverty', 0),
 (12, 'Consumption', 0),
