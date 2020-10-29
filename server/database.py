@@ -4,7 +4,7 @@ from datetime import datetime
 
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 db = SQLAlchemy()
 log = logging.getLogger(__name__)
@@ -95,81 +95,9 @@ def _insert_tags(_db, _engine):
 
     if count == 0:
         log.info('Populating tags table in database...')
-        for t in TAGS:
-            tag = Tags(id=t[0], name=t[1], group=t[2])
-            _db.session.add(tag)
+        with open('sql/tgrains_tags.sql', 'r') as file:
+            escaped_sql = text(file.read())
+            _engine.execute(escaped_sql)
 
         _db.session.commit()
 
-
-TAGS = [
-    (1,  'Business-as-usual', -1),
-    (2,  'Small Business', 0),
-    (3,  'Food Poverty', 0),
-    (4,  'Consumption', 0),
-    (5,  'Social Media', 0),
-    (6,  'Education', 0),
-    (7,  'Regulation', 0),
-    (8,  'Government', 0),
-    (9,  'Capitalism', 0),
-    (10, 'Profits', 0),
-    (11, 'Middle-actors', 0),
-    (12, 'Wholesalers', 0),
-    (13, 'Climate Change', 0),
-    (14, 'Waste', 0),
-    (15, 'Packaging', 0),
-    (16, 'Expertise', 0),
-    (17, 'Experience', 0),
-    (18, 'Organic', 0),
-    (19, 'No-Till', 0),
-
-    (20, 'Soft fruit', 1),
-    (21, 'Peas & Beans', 1),
-    (22, 'Oats', 1),
-    (23, 'Sugar Beet', 1),
-    (24, 'Barley', 1),
-    (25, 'Maize', 1),
-    (26, 'Wheat', 1),
-    (27, 'Vegetables', 1),
-    (28, 'Oilseed Rape', 1),
-    (29, 'Potatoes', 1),
-    (30, 'Top fruit', 1),
-
-    (31, 'Dairy Cattle', 1),
-    (32, 'Beef Cattle', 1),
-    (33, 'Chicken', 1),
-    (34, 'Pork', 1),
-    (35, 'Egg Production', 1),
-    (36, 'Lowland Lamb', 1),
-    (37, 'Upland Lamb', 1),
-
-    (38, 'Production', 2),
-    (39, 'Greenhouse Gas Emissions', 2),
-    (40, 'Nitrogen Leaching', 2),
-    (41, 'Profit', 2),
-    (42, 'Calorie Production', 2),
-
-    (43, 'Pesticide Impacts', 3),
-    (44, 'Ground Water', 3),
-    (45, 'Fish', 3),
-    (46, 'Birds', 3),
-    (47, 'Bees', 3),
-    (48, 'Beneficial Arthropods', 3),
-
-    (49, 'Nutrition', 4),
-    (50, 'Vegetables', 4),
-    (51, 'Tubers', 4),
-    (52, 'Whole Grains', 4),
-    (53, 'Plant Protein', 4),
-    (54, 'Animal Protein', 4),
-    (55, 'Added Sugars', 4),
-    (56, 'Added Fats', 4),
-    (57, 'Dairy', 4),
-    (58, 'Fruit', 4),
-
-    (59, 'Health', 5),
-    (60, 'Stroke', 5),
-    (61, 'Cancer', 5),
-    (62, 'Heart Disease', 5),
-    (63, 'Diabetes', 5),
-]
