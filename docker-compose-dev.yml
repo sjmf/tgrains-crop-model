@@ -21,7 +21,7 @@ services:
     image: samfinnigan/tgrains-cropmodel-backend:latest
     container_name: ${COMPOSE_PROJECT_NAME}_celery
     restart: unless-stopped
-    command: celery worker -A tasks.celery --loglevel=INFO --concurrency=8
+    command: celery -A tasks.celery worker --loglevel=INFO --concurrency=8
     working_dir: /app/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0

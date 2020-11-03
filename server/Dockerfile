@@ -56,4 +56,4 @@ ENTRYPOINT ["/bin/bash", "/app/run.sh"]
 CMD ["gunicorn", "--worker-tmp-dir=/dev/shm", "--workers=2", "--threads=4", "--worker-class=gthread", "--timeout=120", "--log-file=-", "--bind=0.0.0.0:5000", "server:app"]
 
 #CMD gunicorn --worker-tmp-dir=/dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout=120 --log-file=- --bind=0.0.0.0:5000 server:app
-#CMD celery worker -A tasks.celery --loglevel=INFO --concurrency=8
+#CMD celery -A tasks.celery worker --loglevel=INFO --concurrency=8
