@@ -19,7 +19,8 @@ class Config:
     STRING_MAX_LENGTH_TEXTAREA = 10000
     STRING_MAX_LENGTH_AUTHOR = 200
     STRING_MAX_LENGTH_EMAIL = 254
-    HASH_SALT = os.environ.get('HASH_SALT', 'salt.9yA8Uf5j4%1hr65Y1f8h1YGT1hj')
+    STRING_LENGTH_UNIQUE_ID = 34
+    HASH_SALT = os.environ.get('HASH_SAÍLT', 'salt.9yA8Uf5j4%1hr65Y1f8h1YGT1hj')
 
     HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))

@@ -53,6 +53,13 @@ class CommentTags(db.Model):
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 
 
+# Store history states from users in DB
+class ModelState(db.Model):
+    session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
+    index = db.Column(db.Integer, primary_key=True, nullable=False)
+    state = db.Column(db.Text)
+
+
 # ==================
 # Methods
 

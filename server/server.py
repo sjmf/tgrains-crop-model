@@ -9,7 +9,7 @@ from flask import Blueprint, Response, Markup, redirect, request, render_templat
 from redis.exceptions import ConnectionError
 
 from config import redis, create_app, make_celery
-from database import setup_db, db, Comments, Tags, CommentTags
+from database import setup_db, db, Comments, Tags, CommentTags, ModelState
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -244,7 +244,31 @@ def get_tags():
     })
 
 
+@crops.route('state', methods=['POST'])
+def post_state():
+    data = request.get_json(force=True)
+    log.info("{}{}".format(data['session_id'], data['index']))
+
+    # Sanity check input. None of the values are allowed to be empty strings
+    if not data['session_id'] or data['session_id'].isspace() or \
+            not data['index'] or not data['state']:
+        return "Bad request: empty comment fields are not allowed", 400
+
+    state = ModelState(
+        session_id=data['session_id'],
+        index=data['index'],
+        state=json.dumps(data['state'])
+    )
+
+    db.session.add(state)
+    db.session.commit()
+
+    return Response("OK", mimetype='text/plain'), 200
+
+
+#
 # Register blueprint to the app
+#
 app.register_blueprint(crops, url_prefix=app.config['APPLICATION_ROOT'])
 
 
