@@ -9,7 +9,7 @@ from flask import Blueprint, Response, Markup, redirect, request, render_templat
 from redis.exceptions import ConnectionError
 
 from config import redis, create_app, make_celery
-from database import setup_db, db, Comments, Tags, CommentTags, ModelState
+from database import setup_db, db, Comments, Tags, CommentTags, State, User
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -161,11 +161,8 @@ def get_comments():
         if c['reply_id']:
             c['reply'] = get_single_comment(c['reply_id'])
 
-        if c['state']:
-            log.info(c['state'])
-            c['state'] = json.loads(c['state'])
-
-        del c['email']
+        c['state'] = json.loads(comments[i].state.state)
+        c['author'] = comments[i].author.name
 
     return jsonify({
         'comments': items,
@@ -193,25 +190,36 @@ def get_single_comment(reply_id):
 @crops.route('comment', methods=['POST'])
 def post_comment():
     data = request.get_json(force=True)
-    log.info(data)
 
     # ALWAYS escape text taken from user to prevent XSS scriptjacking attacks
     reply_id = None if 'reply_id' not in data else int(data['reply_id'])
 
-    # Sanity check input. None of the values are allowed to be empty strings
-    if not data['text'] or data['text'].isspace() or \
-            not data['author'] or data['author'].isspace() or \
-            not data['email'] or data['email'].isspace():
+    try:
+        # Sanity check input. None of the values are allowed to be empty strings
+        if (not data['text'] or data['text'].isspace()) or \
+                (not data['user_id'] or data['user_id'].isspace()) or \
+                (not data['author'] or data['author'].isspace()) or \
+                (not data['email'] or data['email'].isspace()):
 
-        return "Bad request: empty comment fields are not allowed", 400
+            log.error("Bad request: comment is missing metadata")
+            return "Bad request: comment is missing metadata", 400
+
+    except KeyError as e:
+        log.error("Bad request: comment is missing metadata")
+        return "Bad request: comment is missing metadata", 400
+
+    log.info(data)
+
+    # Update user object with the author's name and email
+    add_and_update_user(uid=data['user_id'], name=data['author'], email=data['email'])
 
     # Add the comment to the database
     comment = Comments(
         text=escape(data['text']),
-        author=escape(data['author']),
-        email=data['email'],  # I don't think we want to escape this, as it should NEVER be returned in the API
+        user_id=data['user_id'],
         hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
-        state=json.dumps(data['state']),
+        state_session_id=data['session_id'],
+        state_index=data['index'],
         reply_id=reply_id
     )
 
@@ -247,16 +255,23 @@ def get_tags():
 @crops.route('state', methods=['POST'])
 def post_state():
     data = request.get_json(force=True)
-    log.info("{}{}".format(data['session_id'], data['index']))
 
     # Sanity check input. None of the values are allowed to be empty strings
-    if not data['session_id'] or data['session_id'].isspace() or \
-            not data['index'] or not data['state']:
+    if (not data['session_id'] or data['session_id'].isspace()) or \
+        (not data['user_id'] or data['user_id'].isspace()) or \
+            'index' not in data.keys() or 'state' not in data.keys():
+
+        log.error("Bad request: empty comment fields are not allowed")
         return "Bad request: empty comment fields are not allowed", 400
 
-    state = ModelState(
+    log.info("{} - index {}".format(data['session_id'], data['index']))
+
+    add_and_update_user(uid=data['user_id'])
+
+    state = State(
         session_id=data['session_id'],
         index=data['index'],
+        user_id=data['user_id'],
         state=json.dumps(data['state'])
     )
 
@@ -264,6 +279,28 @@ def post_state():
     db.session.commit()
 
     return Response("OK", mimetype='text/plain'), 200
+
+
+def add_and_update_user(uid, name=None, email=None):
+    user = User.query.get(uid)
+    log.info("USER ID {} RESULT {}".format(uid, user))
+
+    if user is None:
+        user = User(
+            id=uid,
+            name=escape(name) if name else None,
+            email=email     # Don't escape email, as it should NEVER be returned in the API or displayed
+        )
+        db.session.add(user)
+        db.session.commit()  # Needed?
+
+    elif name is not None and email is not None:
+        user.name = name
+        user.email = email
+
+        db.session.commit()
+
+    return
 
 
 #

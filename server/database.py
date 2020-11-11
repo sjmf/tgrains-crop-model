@@ -19,21 +19,47 @@ def _as_dict_impl(self):
     return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
+# Store history states from users in DB
+class State(db.Model):
+    session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
+    index = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
+    # JSON in MariaDB is just a LONGTEXT alias (holds 2^32 chars or 4GB data)
+    # TEXT column holds 65,535 (2^16 - 1) characters or 64kb of data. Better for DoS attack protection!
+    state = db.Column(db.Text)
+
+
+# Store users in DB
+class User(db.Model):
+    id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
+    name = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
+    email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
+
+    comments = db.relationship('Comments', backref="user", lazy=True)
+
+
 # SQLAlchemy comment class
 class Comments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA), nullable=False)
-    author = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR), nullable=False)
+    user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
     hash = db.Column(db.String(64), nullable=False)
-    email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL), nullable=False)
     reply_id = db.Column(db.Integer, db.ForeignKey('comments.id'))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
 
-    tags = db.relationship("CommentTags", backref="comments")
+    # Reference into State table on composite key
+    state_session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), nullable=False)
+    state_index = db.Column(db.Integer, nullable=False)
 
-    # JSON in MariaDB is just a LONGTEXT alias (holds 2^32 chars or 4GB data)
-    # TEXT column holds 65,535 (2^16 - 1) characters or 64kb of data. Better for DoS attack protection!
-    state = db.Column(db.Text)
+    # Back refs
+    tags = db.relationship("CommentTags", backref="comments")
+    author = db.relationship("User", backref="comments_author")
+    state = db.relationship("State", backref="comments_state")
+
+    # FK Relationship
+    __table_args__ = (db.ForeignKeyConstraint([state_session_id, state_index],
+                                              [State.session_id, State.index]),
+                      {})
 
     as_dict = _as_dict_impl
 
@@ -51,13 +77,6 @@ class Tags(db.Model):
 class CommentTags(db.Model):
     comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), primary_key=True)
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
-
-
-# Store history states from users in DB
-class ModelState(db.Model):
-    session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
-    index = db.Column(db.Integer, primary_key=True, nullable=False)
-    state = db.Column(db.Text)
 
 
 # ==================
