@@ -7,6 +7,7 @@ import json
 
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
+from sqlalchemy import and_
 
 from config import redis, create_app, make_celery
 from database import setup_db, db, Comments, Tags, CommentTags, State, User
@@ -259,24 +260,36 @@ def post_state():
     # Sanity check input. None of the values are allowed to be empty strings
     if (not data['session_id'] or data['session_id'].isspace()) or \
         (not data['user_id'] or data['user_id'].isspace()) or \
-            'index' not in data.keys() or 'state' not in data.keys():
+            'index' not in data.keys():
 
-        log.error("Bad request: empty comment fields are not allowed")
-        return "Bad request: empty comment fields are not allowed", 400
+        log.error("Bad request: missing data")
+        return "Bad request: missing data", 400
 
     log.info("{} - index {}".format(data['session_id'], data['index']))
 
     add_and_update_user(uid=data['user_id'])
 
-    state = State(
-        session_id=data['session_id'],
-        index=data['index'],
-        user_id=data['user_id'],
-        state=json.dumps(data['state'])
-    )
+    if 'state' in data.keys():
+        state = State(
+            session_id=data['session_id'],
+            index=data['index'],
+            user_id=data['user_id'],
+            state=json.dumps(data['state'])
+        )
 
-    db.session.add(state)
-    db.session.commit()
+        db.session.add(state)
+        db.session.commit()
+
+    elif 'deleted' in data.keys():
+        state = db.session.query(State).filter(and_(
+            State.session_id == data['session_id'],
+            State.index == data['index'],
+            State.user_id == data['user_id']
+        )).update({
+            'deleted': data['deleted']
+        })
+
+        db.session.commit()
 
     return Response("OK", mimetype='text/plain'), 200
 
@@ -292,12 +305,11 @@ def add_and_update_user(uid, name=None, email=None):
             email=email     # Don't escape email, as it should NEVER be returned in the API or displayed
         )
         db.session.add(user)
-        db.session.commit()  # Needed?
+        db.session.commit()
 
     elif name is not None and email is not None:
         user.name = name
         user.email = email
-
         db.session.commit()
 
     return

@@ -24,6 +24,10 @@ class State(db.Model):
     session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
     index = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
+
+    timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
+    deleted = db.Column(db.Boolean, default=False)
+
     # JSON in MariaDB is just a LONGTEXT alias (holds 2^32 chars or 4GB data)
     # TEXT column holds 65,535 (2^16 - 1) characters or 64kb of data. Better for DoS attack protection!
     state = db.Column(db.Text)
