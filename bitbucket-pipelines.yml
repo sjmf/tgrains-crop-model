@@ -3,12 +3,19 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: atlassian/default-image:2
+
+# Out-of-memory
+# https://stackoverflow.com/questions/60548011
+options:
+  docker: true
+  size: 2x
 
 pipelines:
   default:
     - step:
         size: 2x
+        name: "Build docker image"
+        image: atlassian/default-image:2
         services:
           - docker
         caches:
@@ -18,3 +25,8 @@ pipelines:
           - docker build -t $BACKEND_IMAGE_NAME:$BITBUCKET_COMMIT -t $BACKEND_IMAGE_NAME:latest ./server/
           - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
           - docker push $BACKEND_IMAGE_NAME
+
+definitions:
+  services:
+    docker:
+      memory: 4096
