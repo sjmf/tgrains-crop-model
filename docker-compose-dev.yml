@@ -53,6 +53,9 @@ services:
     restart: unless-stopped
     networks:
       - backend
+    ports:
+      # For development, expose redis to host
+      - "6379:6379/tcp"
 
   frontend:
     image: samfinnigan/tgrains-cropmodel-frontend
