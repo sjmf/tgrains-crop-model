@@ -13,7 +13,8 @@ class Config:
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
     CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1/tgrains')
+    # NB: Don't use 'localhost' here because MySQL connector assumes you want to look for a socket at /tmp/mysql.sock
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1:3306/tgrains')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     STRING_MAX_LENGTH_TEXTAREA = 10000
@@ -22,7 +23,7 @@ class Config:
     STRING_LENGTH_UNIQUE_ID = 34
     HASH_SALT = os.environ.get('HASH_SALT', 'salt.9yA8Uf5j4%1hr65Y1f8h1YGT1hj')
 
-    HOST = 'localhost' if FLASK_ENV == 'development' else 'redis'
+    HOST = '127.0.0.1' if FLASK_ENV == 'development' else 'redis'
     REDIS_URL = os.environ.get('REDIS_URL', 'redis://{}:6379/0'.format(HOST))
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
