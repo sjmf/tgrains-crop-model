@@ -26,6 +26,17 @@ Application Routes
 # Look at end of file for where this blueprint is actually registered to the app
 crops = Blueprint('crops', __name__, template_folder='templates')
 
+
+# Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
+@app.after_request
+def after_request(response):
+    if app.config['FLASK_ENV'] == 'development':
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+    return response
+
+
 # Development / debug routes. Not available in production
 if app.config['FLASK_ENV'] == 'development':
     @crops.route('/echo', methods=['GET', 'POST'])
@@ -142,34 +153,73 @@ def get_comments():
     log.info(data)
 
     try:
-        page = int(request.args.get('page'))
-        size = int(request.args.get('size'))
-    except (ValueError, TypeError) as e:
+        data['page'] = int(data['page'])
+        data['size'] = int(data['size'])
+        data['sort'] = int(data['sort'])
+        data['filter'] = int(data['filter'])
+    except (ValueError, TypeError, KeyError) as e:
         log.error(e)
-        page, size = (1, 5)
+        log.error("Bad request: comment is missing metadata")
+        return "Bad request: comment is missing metadata", 400
 
-    # Query model
-    query = Comments.query.order_by(Comments.id.desc())
+    # Construct model query
+    query = Comments.query
 
-    # Pagination (load in pages)
-    comments = query.paginate(page, size, True).items
-    items = [i.as_dict() for i in comments]
+    # Filtering
+    if data['filter'] == 1 or data['filter'] == 2:
+        if 'uuid' not in data.keys():
+            return "Bad request: filter=1 is missing uuid", 400
+        query = query.filter(Comments.user_id.like(data['uuid']))
 
+    if data['sort'] < 3:
+        # Regular mode
+        if data['sort'] == 0:
+            query = query.order_by(Comments.id.desc())
+        if data['sort'] == 1:
+            query = query.order_by(Comments.id.asc())
+        elif data['sort'] == 2:
+            query = query.order_by(Comments.distance.desc())
+
+        # Pagination (load in pages)
+        comments = query.paginate(data['page'], data['size'], True).items
+        items = [c.as_dict() for c in comments]
+
+    elif data['sort'] == 3:
+        # Special mode for sorting by relative distance
+        try:
+            data['distance'] = int(data['distance'])
+            subquery = db.session.query(
+                Comments.id,
+                (data['distance'] - Comments.distance).label('difference'),
+                db.func.abs(data['distance'] - Comments.distance).label('absdiffs'),
+            ).subquery()
+            query = query.join(subquery, Comments.id == subquery.c.id).order_by(subquery.c.absdiffs.asc())
+        except KeyError as e:
+            log.error("Bad request: ?distance=value must be passed with ?sort=3")
+            return "Bad request: ?distance=value must be passed with ?sort=3", 400
+
+        # Pagination (load in pages)
+        comments = query.paginate(data['page'], data['size'], True).items
+        items = [c.as_dict() for c in comments]
+
+    # Modify data to output
     for i, c in enumerate(items):
         c['timestamp'] = c['timestamp'].timestamp()
         c['tags'] = [t.tag_id for t in list(comments[i].tags)]
-
-        if c['reply_id']:
-            c['reply'] = get_single_comment(c['reply_id'])
-
+        c['reply'] = get_single_comment(c['reply_id']) if c['reply_id'] else None
         c['state'] = json.loads(comments[i].state.state)
         c['author'] = comments[i].author.name
+        if data['sort'] == 3:
+            c['distance'] = data['distance'] - c['distance']
 
+    # Return a json object
     return jsonify({
         'comments': items,
         'length': query.count(),
-        'page': page,
-        'size': size
+        'page': data['page'],
+        'size': data['size'],
+        'sort': data['sort'],
+        'filter': data['filter']
     })
 
 
@@ -180,12 +230,13 @@ def load_comment_by_id():
 
 def get_single_comment(reply_id):
     query = Comments.query.filter_by(id=reply_id)
-    comment = query.first().as_dict()
-    comment['timestamp'] = comment['timestamp'].timestamp()
-    comment['tags'] = [t.tag_id for t in list(query.first().tags)]
-    del comment['email']
-
-    return comment
+    comment = query.first()
+    item = comment.as_dict()
+    item['timestamp'] = comment.timestamp.timestamp()
+    item['tags'] = [t.tag_id for t in list(comment.tags)]
+    item['author'] = comment.author.name
+    log.info(item)
+    return item
 
 
 @crops.route('comment', methods=['POST'])
@@ -221,7 +272,8 @@ def post_comment():
         hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
         state_session_id=data['session_id'],
         state_index=data['index'],
-        reply_id=reply_id
+        reply_id=reply_id,
+        distance=data['distance']
     )
 
     # Retrieve tags from request and store as rows in CommentTags table
