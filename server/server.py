@@ -180,10 +180,6 @@ def get_comments():
         elif data['sort'] == 2:
             query = query.order_by(Comments.distance.desc())
 
-        # Pagination (load in pages)
-        comments = query.paginate(data['page'], data['size'], True).items
-        items = [c.as_dict() for c in comments]
-
     elif data['sort'] == 3:
         # Special mode for sorting by relative distance
         try:
@@ -198,9 +194,9 @@ def get_comments():
             log.error("Bad request: ?distance=value must be passed with ?sort=3")
             return "Bad request: ?distance=value must be passed with ?sort=3", 400
 
-        # Pagination (load in pages)
-        comments = query.paginate(data['page'], data['size'], True).items
-        items = [c.as_dict() for c in comments]
+    # Pagination (load in pages)
+    comments = query.paginate(data['page'], data['size'], True).items
+    items = [c.as_dict() for c in comments]
 
     # Modify data to output
     for i, c in enumerate(items):
