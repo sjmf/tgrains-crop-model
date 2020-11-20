@@ -15,12 +15,20 @@ log.addHandler(strh)
 log.setLevel(logging.DEBUG)
 
 
-def _as_dict_impl(self):
-    return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+# Mixins for database class methods
+class BaseMixin(object):
+    @classmethod
+    def create(cls, **kw):
+        obj = cls(**kw)
+        db.session.add(obj)
+        db.session.commit()
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 # Store history states from users in DB
-class State(db.Model):
+class State(BaseMixin, db.Model):
     session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
     index = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
@@ -34,7 +42,7 @@ class State(db.Model):
 
 
 # Store users in DB
-class User(db.Model):
+class User(BaseMixin, db.Model):
     id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
     name = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
     email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
@@ -43,43 +51,38 @@ class User(db.Model):
 
 
 # SQLAlchemy comment class
-class Comments(db.Model):
+class Comments(BaseMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA), nullable=False)
     user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
     hash = db.Column(db.String(64), nullable=False)
     reply_id = db.Column(db.Integer, db.ForeignKey('comments.id'))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
+    distance = db.Column(db.Integer, nullable=False)
 
     # Reference into State table on composite key
     state_session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), nullable=False)
     state_index = db.Column(db.Integer, nullable=False)
 
     # Back refs
-    tags = db.relationship("CommentTags", backref="comments")
+    tags = db.relationship("CommentTags", backref="comments", cascade="all, delete",  passive_deletes=True)
     author = db.relationship("User", backref="comments_author")
     state = db.relationship("State", backref="comments_state")
 
     # FK Relationship
-    __table_args__ = (db.ForeignKeyConstraint([state_session_id, state_index],
-                                              [State.session_id, State.index]),
-                      {})
-
-    as_dict = _as_dict_impl
+    __table_args__ = db.ForeignKeyConstraint([state_session_id, state_index], [State.session_id, State.index]), {}
 
 
 # SQLAlchemy Tags class
-class Tags(db.Model):
+class Tags(BaseMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     group = db.Column(db.Integer, nullable=False)
 
-    as_dict = _as_dict_impl
-
 
 # SQLAlchemy CommentTags class
-class CommentTags(db.Model):
-    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), primary_key=True)
+class CommentTags(BaseMixin, db.Model):
+    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id', ondelete="CASCADE"), primary_key=True)
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 
 

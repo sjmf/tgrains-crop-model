@@ -270,15 +270,12 @@ def post_state():
     add_and_update_user(uid=data['user_id'])
 
     if 'state' in data.keys():
-        state = State(
+        State.create(
             session_id=data['session_id'],
             index=data['index'],
             user_id=data['user_id'],
             state=json.dumps(data['state'])
         )
-
-        db.session.add(state)
-        db.session.commit()
 
     elif 'deleted' in data.keys():
         state = db.session.query(State).filter(and_(
@@ -299,13 +296,11 @@ def add_and_update_user(uid, name=None, email=None):
     log.info("USER ID {} RESULT {}".format(uid, user))
 
     if user is None:
-        user = User(
+        User.create(
             id=uid,
             name=escape(name) if name else None,
             email=email     # Don't escape email, as it should NEVER be returned in the API or displayed
         )
-        db.session.add(user)
-        db.session.commit()
 
     elif name is not None and email is not None:
         user.name = name
