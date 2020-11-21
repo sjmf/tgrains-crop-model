@@ -46,6 +46,7 @@ class User(BaseMixin, db.Model):
     id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
     name = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
     email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
+    hash = db.Column(db.String(64), nullable=False)
 
     comments = db.relationship('Comments', backref="user", lazy=True)
 
@@ -55,7 +56,6 @@ class Comments(BaseMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(Config.STRING_MAX_LENGTH_TEXTAREA), nullable=False)
     user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
-    hash = db.Column(db.String(64), nullable=False)
     reply_id = db.Column(db.Integer, db.ForeignKey('comments.id'))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
     distance = db.Column(db.Integer, nullable=False)
@@ -65,9 +65,9 @@ class Comments(BaseMixin, db.Model):
     state_index = db.Column(db.Integer, nullable=False)
 
     # Back refs
-    tags = db.relationship("CommentTags", backref="comments", cascade="all, delete",  passive_deletes=True)
     author = db.relationship("User", backref="comments_author")
-    state = db.relationship("State", backref="comments_state")
+    tags = db.relationship("CommentTags", backref="comments", cascade="all, delete",  passive_deletes=True)
+    state = db.relationship("State", backref="comments_state", cascade="all, delete",  passive_deletes=True)
 
     # FK Relationship
     __table_args__ = db.ForeignKeyConstraint([state_session_id, state_index], [State.session_id, State.index]), {}

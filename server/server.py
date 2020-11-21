@@ -28,13 +28,13 @@ crops = Blueprint('crops', __name__, template_folder='templates')
 
 
 # Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
-@app.after_request
-def after_request(response):
-    if app.config['FLASK_ENV'] == 'development':
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-    return response
+# @app.after_request
+# def after_request(response):
+#     if app.config['FLASK_ENV'] == 'development':
+#         response.headers.add('Access-Control-Allow-Origin', '*')
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+#     return response
 
 
 # Development / debug routes. Not available in production
@@ -152,24 +152,20 @@ def get_comments():
     data = request.args.to_dict(flat=True)
     log.info(data)
 
-    try:
-        data['page'] = int(data['page'])
-        data['size'] = int(data['size'])
-        data['sort'] = int(data['sort'])
-        data['filter'] = int(data['filter'])
-    except (ValueError, TypeError, KeyError) as e:
-        log.error(e)
-        log.error("Bad request: comment is missing metadata")
-        return "Bad request: comment is missing metadata", 400
+    # Defaults for optional arguments
+    data['size'] = 4 if 'size' not in data else int(data['size'])
+    data['page'] = 1 if 'page' not in data else int(data['page'])
+    data['sort'] = 0 if 'sort' not in data else int(data['sort'])
+    data['filter'] = 0 if 'filter' not in data else int(data['filter'])
 
     # Construct model query
     query = Comments.query
 
     # Filtering
     if data['filter'] == 1 or data['filter'] == 2:
-        if 'uuid' not in data.keys():
-            return "Bad request: filter=1 is missing uuid", 400
-        query = query.filter(Comments.user_id.like(data['uuid']))
+        if 'user_id' not in data.keys():
+            return "Bad request: filter=1 is missing user_id", 400
+        query = query.filter(Comments.user_id.like(data['user_id']))
 
     if data['sort'] < 3:
         # Regular mode
@@ -205,6 +201,7 @@ def get_comments():
         c['reply'] = get_single_comment(c['reply_id']) if c['reply_id'] else None
         c['state'] = json.loads(comments[i].state.state)
         c['author'] = comments[i].author.name
+        c['hash'] = comments[i].author.hash
         if data['sort'] == 3:
             c['distance'] = data['distance'] - c['distance']
 
@@ -231,6 +228,7 @@ def get_single_comment(reply_id):
     item['timestamp'] = comment.timestamp.timestamp()
     item['tags'] = [t.tag_id for t in list(comment.tags)]
     item['author'] = comment.author.name
+    item['hash'] = comment.author.hash
     log.info(item)
     return item
 
@@ -265,7 +263,6 @@ def post_comment():
     comment = Comments(
         text=escape(data['text']),
         user_id=data['user_id'],
-        hash=hashlib.sha256((data['email'] + app.config['HASH_SALT']).encode('utf-8')).hexdigest(),
         state_session_id=data['session_id'],
         state_index=data['index'],
         reply_id=reply_id,
@@ -347,7 +344,8 @@ def add_and_update_user(uid, name=None, email=None):
         User.create(
             id=uid,
             name=escape(name) if name else None,
-            email=email     # Don't escape email, as it should NEVER be returned in the API or displayed
+            email=email,     # Don't escape email, as it should NEVER be returned in the API or displayed
+            hash=hashlib.sha256((email + app.config['HASH_SALT']).encode('utf-8')).hexdigest()
         )
 
     elif name is not None and email is not None:
