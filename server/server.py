@@ -167,6 +167,12 @@ def get_comments():
             return "Bad request: filter=1 is missing user_id", 400
         query = query.filter(Comments.user_id.like(data['user_id']))
 
+    elif data['filter'] == 3:
+        if 'reply_id' not in data.keys():
+            return "Bad request: filter=3 is missing reply_id", 400
+        query = query.filter(Comments.reply_id == data['reply_id'])
+
+    # Sorting
     if data['sort'] < 3:
         # Regular mode
         if data['sort'] == 0:
