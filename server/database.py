@@ -46,7 +46,7 @@ class User(BaseMixin, db.Model):
     id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
     name = db.Column(db.String(Config.STRING_MAX_LENGTH_AUTHOR))
     email = db.Column(db.String(Config.STRING_MAX_LENGTH_EMAIL))
-    hash = db.Column(db.String(64), nullable=False)
+    hash = db.Column(db.String(64))
 
     comments = db.relationship('Comments', backref="user", lazy=True)
 

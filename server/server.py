@@ -357,6 +357,10 @@ def post_state():
     return Response("OK", mimetype='text/plain'), 200
 
 
+def generate_hash(string):
+    return hashlib.sha256((string + app.config['HASH_SALT']).encode('utf-8')).hexdigest()
+
+
 def add_and_update_user(uid, name=None, email=None):
     user = User.query.get(uid)
     log.info("USER ID {} RESULT {}".format(uid, user))
@@ -366,12 +370,13 @@ def add_and_update_user(uid, name=None, email=None):
             id=uid,
             name=escape(name) if name else None,
             email=email,     # Don't escape email, as it should NEVER be returned in the API or displayed
-            hash=hashlib.sha256((email + app.config['HASH_SALT']).encode('utf-8')).hexdigest()
+            hash=generate_hash(email) if email else None
         )
 
     elif name is not None and email is not None:
         user.name = name
         user.email = email
+        user.hash = generate_hash(email)
         db.session.commit()
 
     return
