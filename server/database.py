@@ -67,7 +67,7 @@ class Comments(BaseMixin, db.Model):
     # Back refs
     author = db.relationship("User", backref="comments_author")
     tags = db.relationship("CommentTags", backref="comments", cascade="all, delete",  passive_deletes=True)
-    state = db.relationship("State", backref="comments_state", cascade="all, delete",  passive_deletes=True)
+    state = db.relationship("State", backref="comments_state", cascade="all, delete")
 
     # FK Relationship
     __table_args__ = db.ForeignKeyConstraint([state_session_id, state_index], [State.session_id, State.index]), {}

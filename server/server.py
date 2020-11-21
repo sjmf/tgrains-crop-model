@@ -161,6 +161,7 @@ def get_comments():
     # Construct model query
     query = Comments.query
 
+    #
     # Filtering
     if data['filter'] == 1 or data['filter'] == 2:
         if 'user_id' not in data.keys():
@@ -172,6 +173,17 @@ def get_comments():
             return "Bad request: filter=3 is missing reply_id", 400
         query = query.filter(Comments.reply_id == data['reply_id'])
 
+    elif data['filter'] == 4:
+        if 'tags' not in data.keys():
+            return "Bad request: filter=4 is missing tags", 400
+
+        tag_ids = data['tags'].split(',')
+        query = query.join(CommentTags, Comments.id == CommentTags.comment_id)\
+            .filter(CommentTags.tag_id.in_(tag_ids))\
+            .group_by(Comments.id)\
+            .having(db.func.count('*') == len(tag_ids))
+
+    #
     # Sorting
     if data['sort'] < 3:
         # Regular mode
@@ -195,6 +207,9 @@ def get_comments():
         except KeyError as e:
             log.error("Bad request: ?distance=value must be passed with ?sort=3")
             return "Bad request: ?distance=value must be passed with ?sort=3", 400
+
+    # Log SQL query– useful for debugging
+    # log.debug(query.statement.compile(compile_kwargs={"literal_binds": True}))
 
     # Pagination (load in pages)
     comments = query.paginate(data['page'], data['size'], True).items
