@@ -1,0 +1,8 @@
+Soil ph: 1st row = no rows, 2nd row = no cols					
+1					
+1					
+7 
+mid
+6.9
+lower
+7.1

@@ -26,6 +26,7 @@ SHIM_FUNCTION = """
     {{
         int myUniqueLandscapeID;
         double maxCropArea;
+        double maxUplandArea;
         std::vector<double> cropAreas;
         std::vector<double> livestockAreas;
 
@@ -45,6 +46,7 @@ SHIM_FUNCTION = """
         tgrainsData d = {{
             myUniqueLandscapeID, 
             0.0,
+            0.0,
             std::vector<double>(),
             std::vector<double>(),
 
@@ -62,6 +64,7 @@ SHIM_FUNCTION = """
         initialise(
             d.myUniqueLandscapeID,
             d.maxCropArea,
+            d.maxUplandArea,
             d.cropAreas,
             d.livestockAreas,
             d.errorFlag
@@ -217,6 +220,7 @@ class CropModel:
             raise CropModelException("{} is not a valid Landscape ID".format(landscape_id))
 
         self.landscape = landscape_id
+        self.initialised = False
 
     ##
     # Set Crop Areas

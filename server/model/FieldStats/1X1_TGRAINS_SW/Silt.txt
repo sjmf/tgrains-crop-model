@@ -1,0 +1,8 @@
+Soil silt (%*100); shallow followed by mid followed by deep : 1st row = no rows, 2nd row = no cols 				
+1					
+1					
+34.22299
+mid					
+34.22299
+deep					
+34.22299

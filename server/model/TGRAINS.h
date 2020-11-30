@@ -3,7 +3,7 @@
 #include <vector>
 
 void initialise(
-	int myUniqueLandscapeID, double& maxCropArea, std::vector<double>& cropAreas, std::vector<double>& livestockAreas, int& errorFlag
+	int myUniqueLandscapeID, double& maxCropArea, double& maxUplandArea, std::vector<double>& cropAreas, std::vector<double>& livestockAreas, int& errorFlag
 );
 
 void run(
@@ -14,6 +14,8 @@ void run(
 	int& errorFlag
 );
 
+double getLowlandArea(std::vector<double>& cropAreas, std::vector<double>& livestockAreas);
+double getUplandArea(std::vector<double>& livestockAreas);
 std::vector<int> getLandscapeIDs();
 std::string getLandscapeString(int id);
 std::string getCropString(int index);
