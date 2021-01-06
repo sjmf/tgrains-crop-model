@@ -1,6 +1,7 @@
 import os
 from celery import Celery
 from celery.utils.log import get_task_logger
+from celery.signals import worker_ready
 from model.CropModel import CropModel, CropModelException
 import cppyy
 
@@ -14,14 +15,14 @@ celery_app = Celery('tasks', broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BAC
 
 # We don't have an array length for nutritionaldelivery until run() is called.
 # Therefore, we need to define its length to return food group strings:
-TOTAL_FOOD_GROUPS=9
+TOTAL_FOOD_GROUPS = 9
 
 
 # Helper function which initialises a model
-def initialise_model(self, landscape_id):
+def initialise_model(self, landscape_id=101):
 
     self.update_state(state='PROGRESS', meta={'status': 'Initialising'})
-    
+
     # Initialise crop model
     model = CropModel()
     model.set_landscape_id(int(landscape_id))
@@ -34,63 +35,80 @@ def initialise_model(self, landscape_id):
 @celery_app.task(bind=True, track_started=True, name='celery_get_strings')
 def celery_get_strings(self, landscape_id):
 
-    model = initialise_model(self, landscape_id)
+    try:
+        model = initialise_model(self, landscape_id)
 
-    strings = {
-        'crops': [ model.get_crop_string(i).lower()
-                   for i in range(model.cropAreas.size())],
-        'livestock': [ model.get_livestock_string(i).lower()
-                       for i in range(model.livestockAreas.size())],
-        'food_groups': [model.get_food_group_string(i).lower()
-                        for i in range(TOTAL_FOOD_GROUPS)]
-    }
+        strings = {
+            'crops': [model.get_crop_string(i).lower()
+                      for i in range(model.cropAreas.size())],
+            'livestock': [model.get_livestock_string(i).lower()
+                          for i in range(model.livestockAreas.size())],
+            'food_groups': [model.get_food_group_string(i).lower()
+                            for i in range(TOTAL_FOOD_GROUPS)]
+        }
 
-    log.info(model.data.nutritionaldelivery.size())
+        log.info(model.data.nutritionaldelivery.size())
 
-    return {'result': strings}
+        return {'result': strings}
+
+    except (CropModelException,
+            cppyy.gbl.std.invalid_argument,
+            cppyy.gbl.std.filesystem.filesystem_error) as e:
+        log.error(e)
 
 
 @celery_app.task(bind=True, track_started=True, name='celery_model_get_bau')
 def celery_model_get_bau(self, landscape_id):
 
-    model = initialise_model(self, landscape_id)
-    model.run_model()
-    result = model.to_dict()
+    try:
+        model = initialise_model(self, landscape_id)
+        model.run_model()
+        result = model.to_dict()
 
-    log.info(result)
+        log.info(result)
+        return {'result': result}
 
-    return {'result': result}
+    except (CropModelException,
+            cppyy.gbl.std.invalid_argument,
+            cppyy.gbl.std.filesystem.filesystem_error) as e:
+        log.error(e)
 
 
 @celery_app.task(bind=True, track_started=True, name='celery_model_run')
 def celery_model_run(self, landscape_id, data):
 
-    model = initialise_model(self, landscape_id)
-
-    # Extract parameters from strings and mutate CropModel directly
-    max_crops = model.cropAreas.size()
-    for i in range(0, max_crops):
-        crop = model.get_crop_string(i).lower()
-        area = float(data[crop])
-        # log.info("{}={}".format(crop, area))
-        model.cropAreas[i] = area
-
-    max_livestock = model.livestockAreas.size()
-    for i in range(0, max_livestock):
-        livestock = model.get_livestock_string(i).lower()
-        area = float(data[livestock])
-        # log.info("{}={}".format(livestock, area))
-        model.livestockAreas[i] = area
-
     try:
-        model.run_model()
-    except cppyy.gbl.std.length_error as err:
-        raise err
+        model = initialise_model(self, landscape_id)
 
-    result = model.to_dict()
-    log.info(result)
+        # Extract parameters from strings and mutate CropModel directly
+        max_crops = model.cropAreas.size()
+        for i in range(0, max_crops):
+            crop = model.get_crop_string(i).lower()
+            area = float(data[crop])
+            # log.info("{}={}".format(crop, area))
+            model.cropAreas[i] = area
 
-    return {'result': result}
+        max_livestock = model.livestockAreas.size()
+        for i in range(0, max_livestock):
+            livestock = model.get_livestock_string(i).lower()
+            area = float(data[livestock])
+            # log.info("{}={}".format(livestock, area))
+            model.livestockAreas[i] = area
+
+        try:
+            model.run_model()
+        except cppyy.gbl.std.length_error as err:
+            raise err
+
+        result = model.to_dict()
+        log.info(result)
+
+        return {'result': result}
+
+    except (CropModelException,
+            cppyy.gbl.std.invalid_argument,
+            cppyy.gbl.std.filesystem.filesystem_error) as e:
+        log.error(e)
 
 
 if __name__ == "__main__":
