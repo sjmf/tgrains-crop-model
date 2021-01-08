@@ -7,6 +7,7 @@ from cppyy import ll
 
 # Cope with running under relative path as module
 import os.path
+
 my_path = os.path.abspath(os.path.dirname(__file__))
 
 MODEL_HEADER_H = os.path.join(my_path, 'TGRAINS.h')
@@ -89,14 +90,16 @@ SHIM_FUNCTION = """
         );
     }};
 """
-SHIM_FUNCTION = SHIM_FUNCTION.format(header=os.path.join(my_path,"TGRAINS.h"))
+SHIM_FUNCTION = SHIM_FUNCTION.format(header=os.path.join(my_path, "TGRAINS.h"))
 
 cppyy.cppdef(SHIM_FUNCTION)
+
 
 # For Exception Handling:
 class CropModelException(Exception):
     """Base class for exceptions in this module."""
     pass
+
 
 class CropModelInitException(CropModelException):
     """Subclass for initialisation exceptions in this module."""
@@ -121,12 +124,10 @@ class CropModel:
 
         self.initialised = False
 
-
     ##
     # Pretty print internal state
     def __str__(self):
-        return str("\n".join(["{0}:\n\t{1}".format(k,v) for k,v in self.to_dict().items()]))
-
+        return str("\n".join(["{0}:\n\t{1}".format(k, v) for k, v in self.to_dict().items()]))
 
     def to_dict(self):
         c = {k: v for k, v in vars(cppyy.gbl.tgrainsData).items() if not k.startswith('_')}
@@ -137,8 +138,8 @@ class CropModel:
                 c[k] = list(c[k])
         return c
 
-
-    ##  Initialise TGRAINS Model
+    ##
+    # Initialise TGRAINS Model
     #
     # Call C++ Function with the following definition:
     #
@@ -157,8 +158,8 @@ class CropModel:
 
         self.initialised = True
 
-
-    ## Run TGRAINS Model
+    ##
+    # Run TGRAINS Model
     #
     # Call C++ Function with the following definition:
     #
@@ -243,13 +244,13 @@ class CropModel:
         if type(livestock_areas) is not list:
             raise CropModelException("Livestock Areas must be a list of floating-point numbers!")
         if len(livestock_areas) != len(self.data.livestockAreas):
-            raise CropModelException("Livestock Areas must be {0} items in length!".format(len(self.data.livestockAreas)))
+            raise CropModelException(
+                "Livestock Areas must be {0} items in length!".format(len(self.data.livestockAreas)))
         for c in livestock_areas:
             if type(c) is not float:
                 raise CropModelException("Livestock Areas must be numeric!")
 
         self.data.livestockAreas = livestock_areas
-
 
 
 def test():
