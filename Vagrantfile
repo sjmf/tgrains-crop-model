@@ -42,14 +42,18 @@ Vagrant.configure("2") do |config|
   # via 127.0.0.1 to disable public access
   # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
 
+
+# NB: These ports WILL conflict with Docker-desktop hosted ports for the TGRAINS model.
+#     You should run EITHER vagrant (e.g. for server dev) OR docker desktop, not both!
+
   # Jupyter notebook (development)
   config.vm.network "forwarded_port", guest: 8888, host: 8888, host_ip: "127.0.0.1"
 
   # Flask (development)
-  config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
+#  config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
 
   # Nginx/UWSGI (production)
-  config.vm.network "forwarded_port", guest: 80, host: 8000, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
 
   # Redis (development)
   config.vm.network "forwarded_port", guest: 6379, host: 6379, host_ip: "127.0.0.1"
@@ -108,6 +112,9 @@ Vagrant.configure("2") do |config|
   #   apt-get install -y apache2
   # SHELL
   config.vm.provision "shell", inline: <<-SHELL
+    sudo mkdir /Weather /FieldStats /OutFiles
+    sudo chown vagrant:vagrant /Weather /FieldStats /OutFiles
+    sudo chmod 777 /Weather /FieldStats /OutFiles
     sudo apt-get update
 
     BORDER="\n\n===================================================="
@@ -158,7 +165,7 @@ EOF
                 conda update -y -n base -c defaults conda
 
                 # We originally configured a conda environment here, but leaving it as (base) solves problems!
-                conda install -yc conda-forge cppyy
+                conda install -yc conda-forge cppyy celery
                 conda install -y flask markdown
 
                 # Development tools
@@ -166,10 +173,12 @@ EOF
                 jupyter notebook --generate-config
                 sed -i 's/c.NotebookApp.ip.*/c.NotebookApp.ip = "0.0.0.0"/g' /home/vagrant/.jupyter/jupyter_notebook_config.py
                 sed -i '/^#c.NotebookApp.ip /s/^#//' /home/vagrant/.jupyter/jupyter_notebook_config.py
+                sed -i '/^# c.NotebookApp.ip /s/^# //' /home/vagrant/.jupyter/jupyter_notebook_config.py
 
                 conda install xeus xeus-cling -c conda-forge
-                conda install jupyterthemes -c conda-forge
-                jt -t monokai
+
+                #conda install jupyterthemes -c conda-forge
+                #jt -t monokai
             else
                 echo "Miniconda not installed!"
                 exit 1
@@ -178,24 +187,26 @@ EOF
 EOF
 
 
-#     echo $BORDER
-#     echo "Installing Docker"
-#
-#     if hash docker 2>/dev/null; then
-#         echo "Docker already installed :)"
-#     else
-#         apt-get -y install apt-transport-https ca-certificates curl software-properties-common
-#         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-#         add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-#         apt-get update
-#         apt-cache policy docker-ce
-#
-#         apt-get -y install docker-ce
-#         systemctl status docker
-#         usermod -aG docker vagrant
-#
-#         apt-get install -y docker-compose
-#     fi
+     echo -e $BORDER
+     echo "Installing Docker"
+
+     if hash docker 2>/dev/null; then
+         echo "Docker already installed :)"
+     else
+         apt-get -y install apt-transport-https ca-certificates curl software-properties-common
+         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+         add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+         apt-get update
+         apt-cache policy docker-ce
+
+         apt-get -y install docker-ce
+         systemctl status docker
+         usermod -aG docker vagrant
+
+         apt-get install -y docker-compose
+
+         echo "alias ctop='docker run -ti -v /var/run/docker.sock:/var/run/docker.sock quay.io/vektorlab/ctop:latest'" > $HOME/.bash_aliases
+     fi
 
   SHELL
 end
