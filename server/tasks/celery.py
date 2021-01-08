@@ -1,8 +1,8 @@
 import os
 from celery import Celery
 from celery.utils.log import get_task_logger
-from celery.signals import worker_ready
 from model.CropModel import CropModel, CropModelException
+from tasks.exceptions import TaskFailure
 import cppyy
 
 # Set up logger
@@ -20,7 +20,6 @@ TOTAL_FOOD_GROUPS = 9
 
 # Helper function which initialises a model
 def initialise_model(self, landscape_id=101):
-
     self.update_state(state='PROGRESS', meta={'status': 'Initialising'})
 
     # Initialise crop model
@@ -34,7 +33,6 @@ def initialise_model(self, landscape_id=101):
 
 @celery_app.task(bind=True, track_started=True, name='celery_get_strings')
 def celery_get_strings(self, landscape_id):
-
     try:
         model = initialise_model(self, landscape_id)
 
@@ -52,14 +50,15 @@ def celery_get_strings(self, landscape_id):
         return {'result': strings}
 
     except (CropModelException,
+            cppyy.gbl.std.exception,
             cppyy.gbl.std.invalid_argument,
             cppyy.gbl.std.filesystem.filesystem_error) as e:
         log.error(e)
+        raise TaskFailure('Task Failed: ' + str(e))
 
 
 @celery_app.task(bind=True, track_started=True, name='celery_model_get_bau')
 def celery_model_get_bau(self, landscape_id):
-
     try:
         model = initialise_model(self, landscape_id)
         model.run_model()
@@ -69,14 +68,15 @@ def celery_model_get_bau(self, landscape_id):
         return {'result': result}
 
     except (CropModelException,
+            cppyy.gbl.std.exception,
             cppyy.gbl.std.invalid_argument,
             cppyy.gbl.std.filesystem.filesystem_error) as e:
         log.error(e)
+        raise TaskFailure('Task Failed: ' + str(e))
 
 
 @celery_app.task(bind=True, track_started=True, name='celery_model_run')
 def celery_model_run(self, landscape_id, data):
-
     try:
         model = initialise_model(self, landscape_id)
 
@@ -106,9 +106,11 @@ def celery_model_run(self, landscape_id, data):
         return {'result': result}
 
     except (CropModelException,
+            cppyy.gbl.std.exception,
             cppyy.gbl.std.invalid_argument,
             cppyy.gbl.std.filesystem.filesystem_error) as e:
         log.error(e)
+        raise TaskFailure('Task Failed: ' + str(e))
 
 
 if __name__ == "__main__":
