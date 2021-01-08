@@ -23,6 +23,8 @@ services:
     networks:
       - backend
 
+# Run as docker-compose up -d --scale celery=8
+# We can't use the multithreading inside Celery because the DLL isn't threadsafe!!
   celery:
     container_name: celery
     build:
@@ -32,7 +34,7 @@ services:
 # does COPY . /app, but it helps for development!
 #    volumes:
 #      - "${PWD}/server/:/app"
-    command: celery worker -A tasks.celery --loglevel=INFO --concurrency=8
+    command: celery worker -A tasks.celery --loglevel=INFO --concurrency=1
 #    working_dir: /app/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0

@@ -17,11 +17,13 @@ services:
     networks:
       - backend
 
+# Run as docker-compose up -d --scale celery=8
+# We can't use the multithreading inside Celery because the DLL isn't threadsafe!!
   celery:
     image: samfinnigan/tgrains-cropmodel-backend:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_celery
+    #container_name: ${COMPOSE_PROJECT_NAME}_celery
     restart: unless-stopped
-    command: celery -A tasks.celery worker --loglevel=INFO --concurrency=8
+    command: celery -A tasks.celery worker --loglevel=INFO --concurrency=1 -- worker.prefetch_multiplier=1
     working_dir: /app/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
