@@ -8,3 +8,4 @@ Icon?
 .screenrc
 __pycache__/
 server/model/old/*
+Grid.myo
