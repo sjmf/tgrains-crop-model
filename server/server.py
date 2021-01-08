@@ -4,13 +4,17 @@ import pickle
 import markdown
 import hashlib
 import json
+import sys
 
+from time import sleep
+from functools import reduce
 from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
 from redis.exceptions import ConnectionError
 from sqlalchemy import and_
 
 from config import redis, create_app, make_celery
 from database import setup_db, db, Comments, Tags, CommentTags, State, User
+from tasks.exceptions import TaskFailure
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -25,7 +29,6 @@ Application Routes
 '''
 # Look at end of file for where this blueprint is actually registered to the app
 crops = Blueprint('crops', __name__, template_folder='templates')
-
 
 # Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
 # @app.after_request
@@ -66,14 +69,22 @@ def model_post():
     log.info(data)
 
     task = celery.send_task('celery_model_run', kwargs={'data': data, 'landscape_id': data['landscape_id']},
-                            expires=120)
+                            expires=120, retry_limit=5)
 
     return jsonify({'task_id': task.id}), 303, {'Location': url_for('crops.task_status', task_id=task.id)}
 
 
 @crops.route('model', methods=['GET'])
 def model_get():
-    return cached_task('celery_model_get_bau', request.args.get('landscape_id'))
+    redis_key = "flask:{0}:{1}".format('celery_model_get_bau', request.args.get('landscape_id'))
+    result = redis.get(redis_key)
+    if result:
+        result = {'result': json.loads(result), 'state': 'SUCCESS', 'status': ''}
+        return jsonify(result)
+    else:
+        log.error('BAU result was not found in Redis store!')
+        return "500 Error: Failed to retrieve BAU result", 500
+    # return cached_task('celery_model_get_bau', request.args.get('landscape_id'))
 
 
 @crops.route('strings', methods=['GET'])
@@ -105,7 +116,7 @@ def cached_task(task_name, landscape_id):
             log.error("Clear the redis cache (e.g. using redis_client.flushall()) and try again.")
 
     # If not exists, run celery task:
-    task = celery.send_task(task_name, kwargs={'landscape_id': landscape_id}, expires=120)
+    task = celery.send_task(task_name, kwargs={'landscape_id': landscape_id}, expires=120, retry_limit=5)
 
     # Cache the landscape ID against the task in Redis on first-run under key strings_get:101|102
     # Expires in 24h, same as the celery task - this means we won't need to check if the
@@ -178,9 +189,9 @@ def get_comments():
             return "Bad request: filter=4 is missing tags", 400
 
         tag_ids = data['tags'].split(',')
-        query = query.join(CommentTags, Comments.id == CommentTags.comment_id)\
-            .filter(CommentTags.tag_id.in_(tag_ids))\
-            .group_by(Comments.id)\
+        query = query.join(CommentTags, Comments.id == CommentTags.comment_id) \
+            .filter(CommentTags.tag_id.in_(tag_ids)) \
+            .group_by(Comments.id) \
             .having(db.func.count('*') == len(tag_ids))
 
     #
@@ -267,7 +278,6 @@ def post_comment():
                 (not data['user_id'] or data['user_id'].isspace()) or \
                 (not data['author'] or data['author'].isspace()) or \
                 (not data['email'] or data['email'].isspace()):
-
             log.error("Bad request: comment is missing metadata")
             return "Bad request: comment is missing metadata", 400
 
@@ -292,7 +302,7 @@ def post_comment():
 
     # Retrieve tags from request and store as rows in CommentTags table
     db.session.add(comment)
-    db.session.flush()      # Generate PKs
+    db.session.flush()  # Generate PKs
 
     for tag_id in data['tags']:
         db.session.add(CommentTags(comment_id=comment.id, tag_id=tag_id))
@@ -325,9 +335,8 @@ def post_state():
 
     # Sanity check input. None of the values are allowed to be empty strings
     if (not data['session_id'] or data['session_id'].isspace()) or \
-        (not data['user_id'] or data['user_id'].isspace()) or \
+            (not data['user_id'] or data['user_id'].isspace()) or \
             'index' not in data.keys():
-
         log.error("Bad request: missing data")
         return "Bad request: missing data", 400
 
@@ -369,7 +378,7 @@ def add_and_update_user(uid, name=None, email=None):
         User.create(
             id=uid,
             name=escape(name) if name else None,
-            email=email,     # Don't escape email, as it should NEVER be returned in the API or displayed
+            email=email,  # Don't escape email, as it should NEVER be returned in the API or displayed
             hash=generate_hash(email) if email else None
         )
 
@@ -383,10 +392,108 @@ def add_and_update_user(uid, name=None, email=None):
 
 
 #
+# Pre-startup BAU calculation (averaging)
+#
+def pre_calculate_bau():
+    log.info("Running pre-startup tasks")
+
+    # Run BAU average and store in Redis
+    n_runs = 16
+    landscape_ids = [101, 102]
+
+    log.info("Running {} tasks to get BAU calculation. Please wait...".format(n_runs))
+
+    # Run for both 'landscape_id's: 101, 102
+    for landscape_id in landscape_ids:
+
+        # 1. Send tasks to Celery
+        task_name = 'celery_model_get_bau'
+        tasks = []
+        for i in range(n_runs):
+            tasks.append(celery.send_task(task_name,
+                                          kwargs={'landscape_id': landscape_id}, expires=120, retry_limit=5))
+
+        # 2. Wait for the tasks to return (and print status to the console)
+        spinner = ['|', '/', '-', '\\', '|', '/', '-', '\\']
+
+        def progress(idx, task_list):
+            sys.stdout.write('\r ' + spinner[idx] + ' ' + ','.join([str('✅' if t.ready() else '❌') for t in task_list]))
+            sys.stdout.flush()  # important
+
+        i = 0
+        while not reduce(lambda x, y: x and y, [t.ready() for t in tasks]):
+            progress(i, tasks)
+            i = (i + 1) % len(spinner)
+            sleep(0.25)
+
+        progress(i, tasks)
+        sys.stdout.write("\n")
+        log.info("Got results for landscape_id {}".format(landscape_id))
+
+        # 3. Get results from the Celery AsyncResult object (and store in a list called 'results')
+        results = []
+        for result in tasks:
+            try:
+                result_output = result.get()
+                if 'result' in result_output:
+                    results.append(result_output['result'])
+                else:
+                    log.error("Error in Celery BAU results")
+            except Exception as e:
+                log.error("Error in Celery BAU results: " + e)
+
+        # 4. Perform averaging of the result object. Some keys are averaged differently due to being lists.
+        # Keys which won't be averaged:
+        copy_indices = ['myUniqueLandscapeID', 'maxCropArea', 'maxUplandArea',
+                        'cropAreas', 'livestockAreas', 'healthRiskFactors', 'errorFlag']
+        # Keys which contain floats:
+        factors = ['greenhouseGasEmissions', 'nLeach', 'profit', 'production']
+        # Keys which contain lists/arrays:
+        list_factors = ['pesticideImpacts', 'nutritionaldelivery']
+
+        # Define a function to reformat the data into a table: each column will be averaged
+        def reformat(arr, keys):
+            return list(zip(*[[v for k, v in iter(r.items())] for r in
+                              [{f: r[f] for f in keys} for r in arr]
+                              ]))
+
+        # Define a function which averages a list of lists: e.g.
+        # [[0, 1, 0],
+        # [1, 1, 1],
+        # [0, 0, 0],
+        # [1, 1, 0]]
+        # Returns: [0.5, 0.75, 0.25]
+        def average(arr):
+            return [sum(x) / len(x) for x in arr]
+
+        # Copy over non-changing keys directly
+        average_result = {k: results[0][k] for k in copy_indices}
+
+        # Append average results which are individual float values
+        average_result = {**average_result,
+                          **dict(zip(factors,
+                                     average(reformat(results, factors)))
+                                 )}
+
+        # Append average results which are lists (each item in the list is averaged)
+        average_result = {**average_result,
+                          **dict(zip(list_factors,
+                                     [average(zip(*e)) for e in reformat(results, list_factors)])
+                                 )}
+
+        # log.info(average_result)
+
+        # 5. Store result in Redis at the expected key for BAU results
+        redis_key = "flask:{0}:{1}".format(task_name, landscape_id)
+
+        # Cache the landscape ID against the task in Redis on first-run under key celery_model_get_bau:101 | 102
+        redis.set(redis_key, value=json.dumps(average_result))
+
+
+#
 # Register blueprint to the app
 #
 app.register_blueprint(crops, url_prefix=app.config['APPLICATION_ROOT'])
-
 
 '''
     Gunicorn logging options. Not run in dev server
@@ -395,6 +502,11 @@ if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
+
+    # Run pre-startup tasks
+    #
+    with app.app_context():
+        pre_calculate_bau()
 
 '''
     Main. Does not run when running with WSGI
@@ -407,9 +519,16 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
 
     log.debug(app.url_map)
+
+    # Run pre-startup tasks
+    #
+    with app.app_context():
+        pre_calculate_bau()
+
     app.run(**{
         'host': '0.0.0.0',
         'debug': True,
         # 'port': 8000
         # 'threaded': True
+        'use_reloader': False,
     })
