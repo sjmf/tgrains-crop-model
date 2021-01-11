@@ -79,7 +79,7 @@ def model_get():
     redis_key = "flask:{0}:{1}".format('celery_model_get_bau', request.args.get('landscape_id'))
     result = redis.get(redis_key)
     if result:
-        result = {'result': json.loads(result), 'state': 'SUCCESS', 'status': ''}
+        result = json.loads(result)
         return jsonify(result)
     else:
         log.error('BAU result was not found in Redis store!')
@@ -400,36 +400,52 @@ def pre_calculate_bau():
     # Run BAU average and store in Redis
     n_runs = 16
     landscape_ids = [101, 102]
-
-    log.info("Running {} tasks to get BAU calculation. Please wait...".format(n_runs))
+    task_name = 'celery_model_get_bau'
+    redis_key = "flask:{0}:{1}"
 
     # Run for both 'landscape_id's: 101, 102
     for landscape_id in landscape_ids:
+        #
+        # 0. Check if result already exists: if it does, skip to next loop iteration
+        result = redis.get(redis_key.format(task_name, landscape_id))
 
+        if result:
+            result = json.loads(result)
+            if 'result' in result:
+                if 'myUniqueLandscapeID' in result['result']:
+                    log.debug(result)
+                    log.info('BAU result for {} already exists in Redis. Skipping.'.format(landscape_id))
+                    continue
+
+        ##
         # 1. Send tasks to Celery
-        task_name = 'celery_model_get_bau'
+        log.info("Running {} tasks to get BAU for landscape {}. Please wait...".format(n_runs, landscape_id))
+
         tasks = []
         for i in range(n_runs):
             tasks.append(celery.send_task(task_name,
                                           kwargs={'landscape_id': landscape_id}, expires=120, retry_limit=5))
 
+        ##
         # 2. Wait for the tasks to return (and print status to the console)
         spinner = ['|', '/', '-', '\\', '|', '/', '-', '\\']
 
         def progress(idx, task_list):
             sys.stdout.write('\r ' + spinner[idx] + ' ' + ','.join([str('✅' if t.ready() else '❌') for t in task_list]))
             sys.stdout.flush()  # important
+            sleep(0.25)
+            return (idx + 1) % len(spinner)
 
+        # while-loop progress until all tasks complete
         i = 0
         while not reduce(lambda x, y: x and y, [t.ready() for t in tasks]):
-            progress(i, tasks)
-            i = (i + 1) % len(spinner)
-            sleep(0.25)
+            i = progress(i, tasks)
 
         progress(i, tasks)
         sys.stdout.write("\n")
         log.info("Got results for landscape_id {}".format(landscape_id))
 
+        ##
         # 3. Get results from the Celery AsyncResult object (and store in a list called 'results')
         results = []
         for result in tasks:
@@ -442,6 +458,7 @@ def pre_calculate_bau():
             except Exception as e:
                 log.error("Error in Celery BAU results: " + e)
 
+        ##
         # 4. Perform averaging of the result object. Some keys are averaged differently due to being lists.
         # Keys which won't be averaged:
         copy_indices = ['myUniqueLandscapeID', 'maxCropArea', 'maxUplandArea',
@@ -457,7 +474,8 @@ def pre_calculate_bau():
                               [{f: r[f] for f in keys} for r in arr]
                               ]))
 
-        # Define a function which averages a list of lists: e.g.
+        # Define a function which averages a list of lists: e.g.:
+        # https://blog.finxter.com/how-to-average-a-list-of-lists-in-python/
         # [[0, 1, 0],
         # [1, 1, 1],
         # [0, 0, 0],
@@ -475,19 +493,27 @@ def pre_calculate_bau():
                                      average(reformat(results, factors)))
                                  )}
 
-        # Append average results which are lists (each item in the list is averaged)
+        # Append average results which are lists (each float in the list is averaged)
         average_result = {**average_result,
                           **dict(zip(list_factors,
                                      [average(zip(*e)) for e in reformat(results, list_factors)])
                                  )}
 
-        # log.info(average_result)
+        log.debug(average_result)
 
-        # 5. Store result in Redis at the expected key for BAU results
-        redis_key = "flask:{0}:{1}".format(task_name, landscape_id)
-
+        ##
+        # 5. Store result in Redis at the expected key for BAU results:
         # Cache the landscape ID against the task in Redis on first-run under key celery_model_get_bau:101 | 102
-        redis.set(redis_key, value=json.dumps(average_result))
+        redis.set(
+            redis_key.format(task_name, landscape_id),
+            value=json.dumps({
+                'result': average_result,
+                'state': 'SUCCESS',
+                'status': '',
+                'method': 'AVERAGE'
+            }))
+
+        log.info("BAU precalculation for landscape {} stored in Redis".format(landscape_id))
 
 
 #
@@ -530,5 +556,5 @@ if __name__ == "__main__":
         'debug': True,
         # 'port': 8000
         # 'threaded': True
-        'use_reloader': False,
+        # 'use_reloader': False,
     })
