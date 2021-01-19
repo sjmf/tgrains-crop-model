@@ -7,5 +7,6 @@ Icon?
 .idea/*
 .screenrc
 __pycache__/
+*.swp
 server/model/old/*
 Grid.myo
