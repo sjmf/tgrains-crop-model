@@ -395,13 +395,15 @@ def add_and_update_user(uid, name=None, email=None):
 # Pre-startup BAU calculation (averaging)
 #
 def pre_calculate_bau():
-    log.info("Running pre-startup tasks")
 
     # Run BAU average and store in Redis
     n_runs = app.config['BAU_PRECALC_RUNS']
+    timeout = app.config['BAU_PRECALC_TIMEOUT']
     landscape_ids = [101, 102]
     task_name = 'celery_model_get_bau'
     redis_key = "flask:{0}:{1}"
+
+    log.info("Running pre-startup tasks (x{}, timeout {}s)".format(n_runs, timeout))
 
     # Run for both 'landscape_id's: 101, 102
     for landscape_id in landscape_ids:
@@ -424,18 +426,35 @@ def pre_calculate_bau():
         tasks = []
         for i in range(n_runs):
             tasks.append(celery.send_task(task_name,
-                                          kwargs={'landscape_id': landscape_id}, expires=300, retry_limit=5))
+                                          kwargs={'landscape_id': landscape_id}, expires=timeout, retry_limit=5))
 
         ##
         # 2. Wait for the tasks to return (and print status to the console)
-        spinner = ['|', '/', '-', '\\', '|', '/', '-', '\\']
-
         def progress(idx, task_list):
-            sys.stdout.write('\r ' + spinner[idx] + ' ' + ','.join([str('✅' if t.ready() else '❌') for t in task_list]))
-            sys.stdout.flush()  # important
-            sleep(0.25)
-            return (idx + 1) % len(spinner)
 
+            # Pretty progress for tty frontends
+            if sys.stdout.isatty():
+                spinner = ['|', '/', '-', '\\', '|', '/', '-', '\\']
+                sys.stdout.write("\r {} {}".format(
+                    spinner[idx],
+                    ','.join([str('✅' if t.ready() else '❌') for t in task_list])
+                ))
+                sys.stdout.flush()  # important
+                sleep(0.25)
+                return (idx + 1) % len(spinner)
+
+            # Otherwise, print a simple summary at a lower poll rate
+            else:
+                complete = reduce(lambda x, y: x + y, [int(t.ready()) for t in task_list])
+                log.info("{} of {} tasks completed...".format(
+                    complete,
+                    len(task_list)
+                ))
+                if complete < len(task_list):
+                    sleep(5.0)
+                return idx
+
+        #
         # while-loop progress until all tasks complete
         i = 0
         while not reduce(lambda x, y: x and y, [t.ready() for t in tasks]):
@@ -545,7 +564,6 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
 
     log.debug(app.url_map)
-    log.debug(app.config)
 
     # Run pre-startup tasks
     #

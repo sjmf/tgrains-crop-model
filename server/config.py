@@ -29,6 +29,7 @@ class Config:
     CELERY_RESULT_BACKEND = REDIS_URL
 
     BAU_PRECALC_RUNS = int(os.environ.get('BAU_PRECALC_RUNS', 2))
+    BAU_PRECALC_TIMEOUT = int(os.environ.get('BAU_PRECALC_TIMEOUT', 300))
 
     with open('templates/docs.md', 'r') as file:
         HELP_STRING = file.read()
