@@ -28,7 +28,7 @@ class Config:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
 
-    BAU_PRECALC_RUNS = os.environ.get('BAU_PRECALC_RUNS', 2)
+    BAU_PRECALC_RUNS = int(os.environ.get('BAU_PRECALC_RUNS', 2))
 
     with open('templates/docs.md', 'r') as file:
         HELP_STRING = file.read()
