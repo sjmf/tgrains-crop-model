@@ -424,7 +424,7 @@ def pre_calculate_bau():
         tasks = []
         for i in range(n_runs):
             tasks.append(celery.send_task(task_name,
-                                          kwargs={'landscape_id': landscape_id}, expires=120, retry_limit=5))
+                                          kwargs={'landscape_id': landscape_id}, expires=300, retry_limit=5))
 
         ##
         # 2. Wait for the tasks to return (and print status to the console)
