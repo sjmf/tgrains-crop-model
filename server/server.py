@@ -398,7 +398,7 @@ def pre_calculate_bau():
     log.info("Running pre-startup tasks")
 
     # Run BAU average and store in Redis
-    n_runs = 16
+    n_runs = app.config['BAU_PRECALC_RUNS']
     landscape_ids = [101, 102]
     task_name = 'celery_model_get_bau'
     redis_key = "flask:{0}:{1}"
@@ -545,6 +545,7 @@ if __name__ == "__main__":
     log.setLevel(logging.DEBUG)
 
     log.debug(app.url_map)
+    log.debug(app.config)
 
     # Run pre-startup tasks
     #
