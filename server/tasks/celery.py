@@ -64,6 +64,12 @@ def celery_model_get_bau(self, landscape_id):
         model.run_model()
         result = model.to_dict()
 
+        # Append grazing props to model BAU
+        result['grazingProps'] = {
+            'lamb': model.get_upland_grazing_lamb_prop(),
+            'beef': model.get_upland_grazing_beef_prop()
+        }
+
         log.info(result)
         return {'result': result}
 

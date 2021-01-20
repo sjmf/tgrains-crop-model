@@ -481,7 +481,7 @@ def pre_calculate_bau():
         # 4. Perform averaging of the result object. Some keys are averaged differently due to being lists.
         # Keys which won't be averaged:
         copy_indices = ['myUniqueLandscapeID', 'maxCropArea', 'maxUplandArea',
-                        'cropAreas', 'livestockAreas', 'healthRiskFactors', 'errorFlag']
+                        'cropAreas', 'livestockAreas', 'healthRiskFactors', 'errorFlag', 'grazingProps']
         # Keys which contain floats:
         factors = ['greenhouseGasEmissions', 'nLeach', 'profit', 'production']
         # Keys which contain lists/arrays:

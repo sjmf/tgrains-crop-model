@@ -12,6 +12,8 @@ services:
       - FLASK_ENV=production
       - REDIS_URL=redis://redis:6379/0
       - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
+      - BAU_PRECALC_RUNS=16
+      - BAU_PRECALC_TIMEOUT=600
     expose:
       - 5000
     networks:
@@ -28,7 +30,6 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - BAU_PRECALC_RUNS=16
     networks:
       - backend
 
