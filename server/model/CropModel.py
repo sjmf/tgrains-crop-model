@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 # C++ Crop Model Interface
-
 import cppyy
 from cppyy import ll
+
+from functools import reduce
 
 # Cope with running under relative path as module
 import os.path
@@ -104,6 +105,15 @@ class CropModelException(Exception):
 class CropModelInitException(CropModelException):
     """Subclass for initialisation exceptions in this module."""
     pass
+
+
+##
+# Utility function for input validation:
+# Check that some_list is a list containing type some_type
+def check_list_contains_numeric(some_list):
+    return type(some_list) is list and \
+           reduce(lambda x, y: x and y,
+                  [(type(c) is int) or (type(c) is float) for c in some_list])
 
 
 ##
@@ -241,41 +251,68 @@ class CropModel:
     # Set Livestock Areas
     def set_livestock_areas(self, livestock_areas):
 
-        if type(livestock_areas) is not list:
+        if check_list_contains_numeric(livestock_areas):
             raise CropModelException("Livestock Areas must be a list of floating-point numbers!")
+
         if len(livestock_areas) != len(self.data.livestockAreas):
             raise CropModelException(
                 "Livestock Areas must be {0} items in length!".format(len(self.data.livestockAreas)))
-        for c in livestock_areas:
-            if type(c) is not float:
-                raise CropModelException("Livestock Areas must be numeric!")
 
         self.data.livestockAreas = livestock_areas
+
+    ##
+    # Get Lowland Area
+    def get_lowland_area(self):
+        return cppyy.gbl.getLowlandArea(self.cropAreas, self.livestockAreas)
+
+    ##
+    # Get Upland Area
+    def get_upland_area(self):
+        return cppyy.gbl.getUplandArea(self.livestockAreas)
+
+    ##
+    # Get upland grazing lamb prop for area calculations
+    @staticmethod
+    def get_upland_grazing_lamb_prop():
+        return cppyy.gbl.get_uplandGrazingLambProp()
+
+    ##
+    # Get upland grazing beef prop for area calculations
+    @staticmethod
+    def get_upland_grazing_beef_prop():
+        return cppyy.gbl.get_uplandGrazingBeefProp()
 
 
 def test():
     print("Running Crop Model Tests...")
     model = CropModel()
+    landscape_id = 102
 
-    print("Initialising Model...")
+    print("Initialising Model with landscape_id = {}...".format(landscape_id))
+    model.set_landscape_id(landscape_id)
     model.initialise_model()
     print(model)
 
     print("Running Model...")
+    print("\n=== BUSINESS-AS-USUAL ===")
     model.run_model()
     print(model)
 
     # Mutate the state a bit
     from cppyy.gbl.std import vector
-    total_crop_area = 0
-    for d in model.cropAreas:
-        total_crop_area = total_crop_area + d
+    from random import random
 
-    crop_props = vector['double']((0.1, 0.05, 0.1, 0.075, 0.125, 0.07, 0.06, 0.05, 0.05, 0.025, 0.05))
-    for i in range(model.cropAreas.size()):
-        model.cropAreas[i] = total_crop_area * crop_props[i]
+    total_crop_area = sum(model.cropAreas)
 
+    # crop_props = vector['double']((0.1, 0.05, 0.1, 0.075, 0.125, 0.07, 0.06, 0.05, 0.05, 0.025, 0.05))
+    # Props must sum to 1; so take a list of random numbers and divide them by their sum:
+    crop_props = [random() for i in range(0, len(model.cropAreas))]
+    crop_props = vector['double']([i / sum(crop_props) for i in crop_props])
+    model.cropAreas = vector['double']([total_crop_area * i for i in crop_props])
+
+    print(model.cropAreas)
     print("Running Model after mutations...")
+    print("\n=== MUTATED ===")
     model.run_model()
     print(model)
 
@@ -286,6 +323,12 @@ def test():
     print([model.get_crop_string(i) for i in range(model.cropAreas.size())])
     print([model.get_food_group_string(i) for i in range(model.data.nutritionaldelivery.size())])
     print([model.get_livestock_string(i) for i in range(model.data.livestockAreas.size())])
+
+    print("\n=== FUNCTIONS ===")
+    print("Upland area: {}".format(model.get_upland_area()))
+    print("Lowland area: {}".format(model.get_lowland_area()))
+    print("Lamb Props: {}".format(CropModel.get_upland_grazing_lamb_prop()))
+    print("Beef Props: {}".format(CropModel.get_upland_grazing_beef_prop()))
 
     print("Success!")
     return 0

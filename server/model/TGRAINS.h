@@ -21,3 +21,6 @@ std::string getLandscapeString(int id);
 std::string getCropString(int index);
 std::string getLiveStockString(int index);
 std::string getFoodGroupString(int index);
+
+double get_uplandGrazingLambProp();
+double get_uplandGrazingBeefProp();
