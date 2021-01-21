@@ -62,13 +62,7 @@ def celery_model_get_bau(self, landscape_id):
     try:
         model = initialise_model(self, landscape_id)
         model.run_model()
-        result = model.to_dict()
-
-        # Append grazing props to model BAU
-        result['grazingProps'] = {
-            'lamb': model.get_upland_grazing_lamb_prop(),
-            'beef': model.get_upland_grazing_beef_prop()
-        }
+        result = append_grazing_props(model, model.to_dict())
 
         log.info(result)
         return {'result': result}
@@ -106,7 +100,8 @@ def celery_model_run(self, landscape_id, data):
         except cppyy.gbl.std.length_error as err:
             raise err
 
-        result = model.to_dict()
+        result = append_grazing_props(model, model.to_dict())
+
         log.info(result)
 
         return {'result': result}
@@ -117,6 +112,16 @@ def celery_model_run(self, landscape_id, data):
             cppyy.gbl.std.filesystem.filesystem_error) as e:
         log.error(e)
         raise TaskFailure('Task Failed: ' + str(e))
+
+
+##
+# Append grazing props to model
+def append_grazing_props(model, result):
+    result['grazingProps'] = {
+        'lamb': model.get_upland_grazing_lamb_prop(),
+        'beef': model.get_upland_grazing_beef_prop()
+    }
+    return result
 
 
 if __name__ == "__main__":
