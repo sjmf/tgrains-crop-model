@@ -11,6 +11,7 @@ redis = FlaskRedis()
 # Set up class for configuration
 class Config:
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+    FLASK_RUN_PORT = os.environ.get('FLASK_RUN_PORT', 5000)
     CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
     # NB: Don't use 'localhost' here because MySQL connector assumes you want to look for a socket at /tmp/mysql.sock
