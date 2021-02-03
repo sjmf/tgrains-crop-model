@@ -5,6 +5,7 @@ services:
     image: samfinnigan/tgrains-cropmodel-backend:latest
     container_name: ${COMPOSE_PROJECT_NAME}_gunicorn
     restart: unless-stopped
+    command: gunicorn --worker-tmp-dir=/dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout=120 --log-level INFO --log-file=- --bind=0.0.0.0:5000 server:app
     depends_on:
       - redis
       - celery
@@ -14,6 +15,7 @@ services:
       - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
       - BAU_PRECALC_RUNS=16
       - BAU_PRECALC_TIMEOUT=600
+      - LOG_LEVEL=INFO
     expose:
       - 5000
     networks:
