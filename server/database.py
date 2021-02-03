@@ -59,6 +59,7 @@ class Comments(BaseMixin, db.Model):
     reply_id = db.Column(db.Integer, db.ForeignKey('comments.id'))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
     distance = db.Column(db.Integer, nullable=False)
+    landscape_id = db.Column(db.Integer, nullable=False)
 
     # Reference into State table on composite key
     state_session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), nullable=False)

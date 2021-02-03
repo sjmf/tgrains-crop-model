@@ -171,12 +171,15 @@ def get_comments():
     # Construct model query
     query = Comments.query
 
+    if 'landscape_id' in data.keys():
+        query = query.filter(Comments.landscape_id == data['landscape_id'])
+
     #
     # Filtering
     if data['filter'] == 1 or data['filter'] == 2:
         if 'user_id' not in data.keys():
             return "Bad request: filter=1 is missing user_id", 400
-        query = query.filter(Comments.user_id.like(data['user_id']))
+        query = query.filter(Comments.user_id == data['user_id'])
 
     elif data['filter'] == 3:
         if 'reply_id' not in data.keys():
@@ -276,7 +279,8 @@ def post_comment():
         if (not data['text'] or data['text'].isspace()) or \
                 (not data['user_id'] or data['user_id'].isspace()) or \
                 (not data['author'] or data['author'].isspace()) or \
-                (not data['email'] or data['email'].isspace()):
+                (not data['email'] or data['email'].isspace()) or \
+                (not data['landscape_id'] or type(data['landscape_id']) is not int):
             log.error("Bad request: comment is missing metadata")
             return "Bad request: comment is missing metadata", 400
 
@@ -296,7 +300,8 @@ def post_comment():
         state_session_id=data['session_id'],
         state_index=data['index'],
         reply_id=reply_id,
-        distance=data['distance']
+        distance=data['distance'],
+        landscape_id=data['landscape_id']
     )
 
     # Retrieve tags from request and store as rows in CommentTags table
