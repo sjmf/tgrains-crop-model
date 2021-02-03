@@ -14,7 +14,6 @@ from sqlalchemy import and_
 
 from config import redis, create_app, make_celery
 from database import setup_db, db, Comments, Tags, CommentTags, State, User
-from tasks.exceptions import TaskFailure
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -215,7 +214,7 @@ def get_comments():
                 db.func.abs(data['distance'] - Comments.distance).label('absdiffs'),
             ).subquery()
             query = query.join(subquery, Comments.id == subquery.c.id).order_by(subquery.c.absdiffs.asc())
-        except KeyError as e:
+        except KeyError:
             log.error("Bad request: ?distance=value must be passed with ?sort=3")
             return "Bad request: ?distance=value must be passed with ?sort=3", 400
 
@@ -281,7 +280,7 @@ def post_comment():
             log.error("Bad request: comment is missing metadata")
             return "Bad request: comment is missing metadata", 400
 
-    except KeyError as e:
+    except KeyError:
         log.error("Bad request: comment is missing metadata")
         return "Bad request: comment is missing metadata", 400
 
@@ -353,7 +352,7 @@ def post_state():
         )
 
     elif 'deleted' in data.keys():
-        state = db.session.query(State).filter(and_(
+        db.session.query(State).filter(and_(
             State.session_id == data['session_id'],
             State.index == data['index'],
             State.user_id == data['user_id']
@@ -475,7 +474,7 @@ def pre_calculate_bau():
                 else:
                     log.error("Error in Celery BAU results")
             except Exception as e:
-                log.error("Error in Celery BAU results: " + e)
+                log.error("Error in Celery BAU results: " + str(e))
 
         ##
         # 4. Perform averaging of the result object. Some keys are averaged differently due to being lists.
