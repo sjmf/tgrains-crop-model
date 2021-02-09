@@ -4,7 +4,7 @@ from datetime import datetime
 
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, and_
 
 db = SQLAlchemy()
 log = logging.getLogger(__name__)
@@ -69,6 +69,9 @@ class Comments(BaseMixin, db.Model):
     author = db.relationship("User", backref="comments_author")
     tags = db.relationship("CommentTags", backref="comments", cascade="all, delete",  passive_deletes=True)
     state = db.relationship("State", backref="comments_state", cascade="all, delete")
+    session = db.relationship("State", backref="comments_session",
+                              primaryjoin=and_(State.session_id == state_session_id),
+                              uselist=True)
 
     # FK Relationship
     __table_args__ = db.ForeignKeyConstraint([state_session_id, state_index], [State.session_id, State.index]), {}
