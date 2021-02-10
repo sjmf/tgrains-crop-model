@@ -298,7 +298,7 @@ def post_comment():
     comment = Comments(
         text=escape(data['text']),
         user_id=data['user_id'],
-        state_session_id=data['session_id'],
+        session_id=data['session_id'],
         state_index=data['index'],
         reply_id=reply_id,
         distance=data['distance'],

@@ -62,7 +62,7 @@ class Comments(BaseMixin, db.Model):
     landscape_id = db.Column(db.Integer, nullable=False)
 
     # Reference into State table on composite key
-    state_session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), nullable=False)
+    session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), nullable=False)
     state_index = db.Column(db.Integer, nullable=False)
 
     # Back refs
@@ -70,11 +70,11 @@ class Comments(BaseMixin, db.Model):
     tags = db.relationship("CommentTags", backref="comments", cascade="all, delete",  passive_deletes=True)
     state = db.relationship("State", backref="comments_state", cascade="all, delete")
     session = db.relationship("State", backref="comments_session",
-                              primaryjoin=and_(State.session_id == state_session_id),
+                              primaryjoin=and_(State.session_id == session_id),
                               uselist=True)
 
     # FK Relationship
-    __table_args__ = db.ForeignKeyConstraint([state_session_id, state_index], [State.session_id, State.index]), {}
+    __table_args__ = db.ForeignKeyConstraint([session_id, state_index], [State.session_id, State.index]), {}
 
 
 # SQLAlchemy Tags class
