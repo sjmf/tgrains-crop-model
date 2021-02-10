@@ -234,7 +234,12 @@ def get_comments():
         c['tags'] = [t.tag_id for t in list(comments[i].tags)]
         c['reply'] = get_single_comment(c['reply_id']) if c['reply_id'] else None
         c['state_index'] = comments[i].state_index
-        c['session'] = [json.loads(s.state) for s in comments[i].session]
+        c['session'] = {
+            'history': [json.loads(s.state) for s in comments[i].session],
+            'count': len(comments[i].session),
+            'id': comments[i].session_id,
+            'opened': comments[i].session[0].timestamp.timestamp()
+        }
         c['author'] = comments[i].author.name
         c['hash'] = comments[i].author.hash
         if data['sort'] == 3:
