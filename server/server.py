@@ -359,6 +359,7 @@ def post_state():
             session_id=data['session_id'],
             index=data['index'],
             user_id=data['user_id'],
+            forked_from=data['forked_from'],
             state=json.dumps(data['state'])
         )
 
@@ -372,6 +373,34 @@ def post_state():
         })
 
         db.session.commit()
+
+    return Response("OK", mimetype='text/plain'), 200
+
+
+@crops.route('fork', methods=['POST'])
+def fork_session():
+    data = request.get_json(force=True)
+
+    if (not data['session_id'] or data['session_id'].isspace()) or \
+            (not data['new_session_id'] or data['new_session_id'].isspace()) or \
+            (not data['user_id'] or data['user_id'].isspace()):
+        log.error("Bad request: missing data")
+        return "Bad request: missing data", 400
+
+    # Query database for all states in the session at session_id
+    session = db.session.query(State).filter(
+        State.session_id == data['session_id']
+    ).all()
+
+    # Modify states moving session_id into forked_from and replacing with fork_id
+    for s in session:
+        State.create(
+            session_id=data['new_session_id'],
+            index=s.index,
+            user_id=data['user_id'],
+            forked_from=s.session_id,
+            state=s.state
+        )
 
     return Response("OK", mimetype='text/plain'), 200
 

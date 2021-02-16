@@ -32,7 +32,7 @@ class State(BaseMixin, db.Model):
     session_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), primary_key=True, nullable=False)
     index = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID), db.ForeignKey('user.id'), nullable=False)
-
+    forked_from = db.Column(db.String(Config.STRING_LENGTH_UNIQUE_ID))
     timestamp = db.Column(db.DateTime(), default=datetime.utcnow, index=True, nullable=False)
     deleted = db.Column(db.Boolean, default=False)
 
