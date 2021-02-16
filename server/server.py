@@ -359,7 +359,7 @@ def post_state():
             session_id=data['session_id'],
             index=data['index'],
             user_id=data['user_id'],
-            forked_from=data['forked_from'],
+            forked_from=data['forked_from'] if 'forked_from' in data.keys() else None,
             state=json.dumps(data['state'])
         )
 
