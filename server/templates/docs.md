@@ -72,7 +72,7 @@ JSON.
 * author: String. The author's name.
 * email: String. The author's email address (may be NULL for social medial login)
 
-POST body MAY also include the following variable:
+POST body MAY also include the following optional variable:
 
 * reply_id: Integer. The comment that this comment is replying to.
 
@@ -87,3 +87,28 @@ Retrieve comment tags from the database.
 _Method:_ `GET`
 
 Retrieve a comment by ID (used for getting replies)
+
+
+### [/state](/state)
+_Method:_ `POST`
+
+POST a state to the server. POST body MUST include a JSON object with the below params:
+
+* session_id
+* user_id
+* index
+
+POST body MAY also include the following optional variable:
+
+* forked_from
+
+
+### [/fork](/fork)
+_Method:_ `POST`
+
+Fork a session on the server side by ID. Replicates all states of that session in the database, with `forked_from` 
+column set to the value of the originating session. POST body must be a JSON object with the following contents:
+
+* session_id
+* new_session_id
+* user_id
