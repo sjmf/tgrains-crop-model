@@ -574,7 +574,7 @@ app.register_blueprint(crops, url_prefix=app.config['APPLICATION_ROOT'])
 '''
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers.extend(gunicorn_logger.handlers)
+    app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
     # Run pre-startup tasks
