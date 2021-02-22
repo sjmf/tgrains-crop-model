@@ -17,7 +17,7 @@ services:
       - BAU_PRECALC_TIMEOUT=600
       - LOG_LEVEL=INFO
       - SCRIPT_NAME=/api
-      - ADD_PROXY_FIX=True
+      - PROXY_FIX=1 # Behind traefik, set this to 2
     expose:
       - 5000
     networks:

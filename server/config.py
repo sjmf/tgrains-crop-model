@@ -33,7 +33,7 @@ class Config:
     BAU_PRECALC_RUNS = int(os.environ.get('BAU_PRECALC_RUNS', 2))
     BAU_PRECALC_TIMEOUT = int(os.environ.get('BAU_PRECALC_TIMEOUT', 300))
 
-    ADD_PROXY_FIX = bool(os.environ.get('ADD_PROXY_FIX', False))
+    PROXY_FIX = int(os.environ.get('PROXY_FIX', 0))
 
     with open('templates/docs.md', 'r') as file:
         HELP_STRING = file.read()
@@ -47,9 +47,10 @@ def create_app(config_class=Config):
 
     redis.init_app(_app)
     # Fix path when running behind a reverse proxy (e.g. nginx, traefik, etc)
-    if _app.config['ADD_PROXY_FIX']:
+    if _app.config['PROXY_FIX'] > 0:
+        lvl = _app.config['PROXY_FIX']
         from werkzeug.middleware.proxy_fix import ProxyFix
-        _app.wsgi_app = ProxyFix(_app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=2, x_prefix=1)
+        _app.wsgi_app = ProxyFix(_app.wsgi_app, x_for=lvl, x_proto=1, x_host=1, x_port=lvl, x_prefix=1)
 
     # Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
     if _app.config['FLASK_ENV'] == 'development':

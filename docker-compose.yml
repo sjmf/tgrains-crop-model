@@ -22,7 +22,7 @@ services:
       - BAU_PRECALC_TIMEOUT=600
       - LOG_LEVEL=DEBUG
       - SCRIPT_NAME=/api
-      - ADD_PROXY_FIX=True
+      - PROXY_FIX=1
     expose:
       - 5000
     networks:
