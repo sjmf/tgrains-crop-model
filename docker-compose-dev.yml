@@ -10,12 +10,14 @@ services:
       - redis
       - celery
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - REDIS_URL=redis://redis:6379/0
       - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
       - BAU_PRECALC_RUNS=16
       - BAU_PRECALC_TIMEOUT=600
       - LOG_LEVEL=INFO
+      - SCRIPT_NAME=/api
+      - ADD_PROXY_FIX=True
     expose:
       - 5000
     networks:
@@ -86,8 +88,9 @@ services:
       - "traefik.http.routers.cropmodel.rule=Host(`model.tgrains.com`)"
       - "traefik.http.routers.cropmodel.tls=true"
       - "traefik.http.routers.cropmodel.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.cropmodel.middlewares=secured@file"
       - "traefik.http.services.cropmodel.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.forwardPortHeader.headers.customrequestheaders.X-Forwarded-Port=443"
+      - "traefik.http.routers.test.middlewares=secured@file,forwardPortHeader@docker"
 
 networks:
   backend:

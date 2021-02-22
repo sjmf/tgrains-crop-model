@@ -13,11 +13,16 @@ services:
 # does COPY . /app, but it helps for development!
 #    volumes:
 #      - "${PWD}/server/:/app"
-#    command: gunicorn --worker-tmp-dir /dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout 120 --bind 0.0.0.0:5000 'server:app'
+#    command: gunicorn --worker-tmp-dir /dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout=120 --log-level=DEBUG --log-file=- --bind 0.0.0.0:5000 'server:app'
     environment:
-      - FLASK_ENV=production
+      - FLASK_ENV=development
       - REDIS_URL=redis://redis:6379/0
       - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
+      - BAU_PRECALC_RUNS=2
+      - BAU_PRECALC_TIMEOUT=600
+      - LOG_LEVEL=DEBUG
+      - SCRIPT_NAME=/api
+      - ADD_PROXY_FIX=True
     expose:
       - 5000
     networks:
@@ -30,12 +35,12 @@ services:
     build:
       context: ./server
     restart: unless-stopped
+    command: celery -A tasks.celery worker --loglevel=INFO --concurrency=1 -- worker.prefetch_multiplier=1
 # You don't need this for production because the Dockerfile
 # does COPY . /app, but it helps for development!
 #    volumes:
 #      - "${PWD}/server/:/app"
-    command: celery worker -A tasks.celery --loglevel=INFO --concurrency=1
-#    working_dir: /app/
+    working_dir: /app/
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -76,7 +81,7 @@ services:
       context: ./frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8000:80/tcp"
     depends_on:
       - gunicorn
     networks:

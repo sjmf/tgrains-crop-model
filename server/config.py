@@ -15,7 +15,8 @@ class Config:
     CONFIG_JSON = os.environ.get('CONFIG_JSON', '{}')
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
     # NB: Don't use 'localhost' here because MySQL connector assumes you want to look for a socket at /tmp/mysql.sock
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'mysql://root:devpassword@127.0.0.1:3306/tgrains')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI',
+                                             'mysql://root:devpassword@127.0.0.1:3306/tgrains')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     STRING_MAX_LENGTH_TEXTAREA = 10000
@@ -32,30 +33,32 @@ class Config:
     BAU_PRECALC_RUNS = int(os.environ.get('BAU_PRECALC_RUNS', 2))
     BAU_PRECALC_TIMEOUT = int(os.environ.get('BAU_PRECALC_TIMEOUT', 300))
 
+    ADD_PROXY_FIX = bool(os.environ.get('ADD_PROXY_FIX', False))
+
     with open('templates/docs.md', 'r') as file:
         HELP_STRING = file.read()
 
 
+##
 # Factory function for flask app
 def create_app(config_class=Config):
     _app = Flask(__name__)
     _app.config.from_object(config_class)
 
     redis.init_app(_app)
-
-    # Fix path when running behind a proxy (e.g. nginx, traefik, etc)
-    if _app.config['FLASK_ENV'] == 'production':
+    # Fix path when running behind a reverse proxy (e.g. nginx, traefik, etc)
+    if _app.config['ADD_PROXY_FIX']:
         from werkzeug.middleware.proxy_fix import ProxyFix
-        _app.wsgi_app = ProxyFix(_app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_port=1)
+        _app.wsgi_app = ProxyFix(_app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=2, x_prefix=1)
 
     # Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
-    @_app.after_request
-    def after_request(response):
-        if _app.config['FLASK_ENV'] == 'development':
+    if _app.config['FLASK_ENV'] == 'development':
+        @_app.after_request
+        def after_request(response):
             response.headers.add('Access-Control-Allow-Origin', '*')
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
             response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-        return response
+            return response
 
     return _app
 
