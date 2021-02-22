@@ -28,15 +28,6 @@ Application Routes
 # Look at end of file for where this blueprint is actually registered to the app
 crops = Blueprint('crops', __name__, template_folder='templates')
 
-# Add CORS headers if an issue in development, for example if you run Flask on a different port to your UI
-# @app.after_request
-# def after_request(response):
-#     if app.config['FLASK_ENV'] == 'development':
-#         response.headers.add('Access-Control-Allow-Origin', '*')
-#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-#         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-#     return response
-
 
 # Development / debug routes. Not available in production
 if app.config['FLASK_ENV'] == 'development':
