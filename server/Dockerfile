@@ -38,12 +38,12 @@ RUN apt-get update &&\
 # Copy /venv from the build stage
 COPY --from=build /venv /venv
 
-# Copy rest of app environment
-COPY . /app
-
 COPY ./model/FieldStats /FieldStats
 COPY ./model/Weather /Weather
 RUN mkdir /OutFiles
+
+# Copy rest of app environment
+COPY . /app
 
 EXPOSE 5000
 
