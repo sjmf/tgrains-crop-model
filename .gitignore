@@ -9,4 +9,5 @@ Icon?
 __pycache__/
 *.swp
 server/model/old/*
+frontend/*
 Grid.myo
