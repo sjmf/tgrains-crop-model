@@ -2,7 +2,8 @@ cppyy
 flask
 markdown
 gunicorn
-celery
+celery==5.0.3
+click==7.1.2
 redis
 redis-py
 flask-redis

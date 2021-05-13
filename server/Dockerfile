@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.8.2 as build
+FROM continuumio/miniconda3:4.9.2 as build
 MAINTAINER Samantha Finnigan
 WORKDIR /app
 
