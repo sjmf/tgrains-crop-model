@@ -11,8 +11,8 @@ services:
       - celery
     environment:
       - FLASK_ENV=development
-      - REDIS_URL=redis://:devpassword@redis:6379/0
-      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
+      - REDIS_URL=${REDIS_URL}
+      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/${MYSQL_DATABASE}
       - BAU_PRECALC_RUNS=16
       - BAU_PRECALC_TIMEOUT=600
       - LOG_LEVEL=INFO
@@ -32,8 +32,8 @@ services:
     command: celery -A tasks.celery worker --loglevel=INFO --concurrency=1 -- worker.prefetch_multiplier=1
     working_dir: /app/
     environment:
-      - CELERY_BROKER_URL=redis://:devpassword@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:devpassword@redis:6379/0
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_RESULT_BACKEND=${REDIS_URL}
     networks:
       - backend
 
@@ -42,10 +42,10 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_mariadb
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=devpassword
-      - MYSQL_DATABASE=tgrains
-      - MYSQL_USER=flask
-      - MYSQL_PASSWORD=sqlalchemy_devpassword
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     ports:
       # For development, expose mariadb to host
