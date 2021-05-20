@@ -1,0 +1,101 @@
+version: '3.6'
+
+services:
+  gunicorn:
+    container_name: gunicorn
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - celery
+# You don't need this for production because the Dockerfile
+# does COPY . /app, but it helps for development!
+#    volumes:
+#      - "${PWD}/server/:/app"
+#    command: gunicorn --worker-tmp-dir /dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout=120 --log-level=DEBUG --log-file=- --bind 0.0.0.0:5000 'server:app'
+    environment:
+      - FLASK_ENV=development
+      - REDIS_URL=redis://redis:6379/0
+      - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
+      - BAU_PRECALC_RUNS=2
+      - BAU_PRECALC_TIMEOUT=600
+      - LOG_LEVEL=DEBUG
+      - SCRIPT_NAME=/api
+      - PROXY_FIX=1
+    expose:
+      - 5000
+    networks:
+      - backend
+
+# Run as docker-compose up -d --scale celery=8
+# We can't use the multithreading inside Celery because the DLL isn't threadsafe!!
+  celery:
+    container_name: celery
+    build:
+      context: ./server
+    restart: unless-stopped
+    command: celery -A tasks.celery worker --loglevel=INFO --concurrency=1 -- worker.prefetch_multiplier=1
+# You don't need this for production because the Dockerfile
+# does COPY . /app, but it helps for development!
+#    volumes:
+#      - "${PWD}/server/:/app"
+    working_dir: /app/
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    networks:
+      - backend
+
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=devpassword
+      - MYSQL_DATABASE=tgrains
+      - MYSQL_USER=flask
+      - MYSQL_PASSWORD=sqlalchemy_devpassword
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    ports:
+      # For development, expose mariadb to host
+      - "3306:3306/tcp"
+    networks:
+      - backend
+    volumes:
+      - mariadb:/var/lib/mysql
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      # For development, expose redis to host
+      - "6379:6379/tcp"
+    networks:
+      - backend
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8000:80/tcp"
+    depends_on:
+      - gunicorn
+    networks:
+      - backend
+      - default
+
+networks:
+  backend:
+    driver: bridge
+  default:
+
+volumes:
+  mariadb:
+#    driver_opts:
+#      type: none
+#      device: /tmp/mariadb
+#      o: bind
