@@ -11,7 +11,7 @@ services:
       - celery
     environment:
       - FLASK_ENV=development
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:devpassword@redis:6379/0
       - SQLALCHEMY_DATABASE_URI=mysql://root:devpassword@mariadb/tgrains
       - BAU_PRECALC_RUNS=16
       - BAU_PRECALC_TIMEOUT=600
@@ -32,8 +32,8 @@ services:
     command: celery -A tasks.celery worker --loglevel=INFO --concurrency=1 -- worker.prefetch_multiplier=1
     working_dir: /app/
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://:devpassword@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:devpassword@redis:6379/0
     networks:
       - backend
 
@@ -59,11 +59,14 @@ services:
     image: redis:alpine
     container_name: ${COMPOSE_PROJECT_NAME}_redis
     restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
     networks:
       - backend
     ports:
       # For development, expose redis to host
       - "6379:6379/tcp"
+    volumes:
+      - ./conf/redis.conf:/usr/local/etc/redis/redis.conf
 
   frontend:
     image: samfinnigan/tgrains-cropmodel-frontend
