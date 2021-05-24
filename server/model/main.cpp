@@ -10,8 +10,9 @@ void init(std::vector<double>& cropAreas, std::vector<double>& livestockAreas, i
 		std::endl
 	;
 
-	int myUniqueLandscapeID = 101;
+	int myUniqueLandscapeID = 102;
 	double maxCropArea = 0.0;
+	double maxUplandArea = 0.0;
 
 	cout << "\n\n-------------------------------PreInit" << endl;
 	cout << "myUniqueLandscapeID = " << myUniqueLandscapeID << endl;
@@ -23,7 +24,7 @@ void init(std::vector<double>& cropAreas, std::vector<double>& livestockAreas, i
 	cout << "ErrorFlag = " << ErrorFlag << endl;
 
 	cout << "\nmain.cpp: INITIALISING...\n" << endl;
-	initialise(myUniqueLandscapeID, maxCropArea, cropAreas, livestockAreas, ErrorFlag);
+	initialise(myUniqueLandscapeID, maxUplandArea, maxCropArea, cropAreas, livestockAreas, ErrorFlag);
 	cout << "\nmain.cpp: ...FINISHED\n" << endl;
 
 	cout << "\n\n-------------------------------String Functions" << endl;
@@ -92,8 +93,8 @@ void run(std::vector<double>& cropAreas, std::vector<double>& livestockAreas, in
 	cout << "numLivestock = " << numLivestock << endl;
 
 	std::vector<double> 
-		cropProps = { 0.1, 0.05, 0.1, 0.075, 0.125, 0.07, 0.06, 0.05, 0.05, 0.025, 0.05 },
-		livestockProps = {0.05, 0.025, 0.075, 0.025, 0.03, 0.04}
+		cropProps = { 0.0002, 0.008, 0.006, 0.02, 0.03, 0.0, 0.001, 0.004, 0.008, 0.0004, 0.02 },
+    	livestockProps = { 0.2, 0.3, 0.0002, 0.0002, 0.002, 0.4 }
 	;
 
 	double sumProps = 0;
