@@ -6,9 +6,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_gunicorn
     restart: unless-stopped
     command: gunicorn --worker-tmp-dir=/dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout=120 --log-level INFO --log-file=- --bind=0.0.0.0:5000 server:app
-    depends_on:
-      - redis
-      - celery
     environment:
       - FLASK_ENV=development
       - REDIS_URL=${REDIS_URL}
@@ -72,8 +69,6 @@ services:
     image: samfinnigan/tgrains-cropmodel-frontend
     container_name: ${COMPOSE_PROJECT_NAME}_nginx
     restart: unless-stopped
-    depends_on:
-      - gunicorn
     ports:
       # For development, expose frontend to host
       - "8000:80/tcp"
