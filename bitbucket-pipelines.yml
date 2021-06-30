@@ -11,20 +11,21 @@ options:
   size: 2x
 
 pipelines:
-  default:
-    - step:
-        size: 2x
-        name: "Build docker image"
-        image: atlassian/default-image:2
-        services:
-          - docker
-        caches:
-          - docker
-        script: 
-          - export BACKEND_IMAGE_NAME=${DOCKER_HUB_USERNAME}/tgrains-cropmodel-backend
-          - docker build -t $BACKEND_IMAGE_NAME:$BITBUCKET_COMMIT -t $BACKEND_IMAGE_NAME:latest ./server/
-          - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
-          - docker push $BACKEND_IMAGE_NAME
+  branches:
+    master:
+      - step:
+          size: 2x
+          name: "Build docker image"
+          image: atlassian/default-image:2
+          services:
+            - docker
+          caches:
+            - docker
+          script: 
+            - export BACKEND_IMAGE_NAME=${DOCKER_HUB_USERNAME}/tgrains-cropmodel-backend
+            - docker build -t $BACKEND_IMAGE_NAME:$BITBUCKET_COMMIT -t $BACKEND_IMAGE_NAME:latest ./server/
+            - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
+            - docker push $BACKEND_IMAGE_NAME
 
 definitions:
   services:
