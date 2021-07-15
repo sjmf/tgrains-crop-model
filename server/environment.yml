@@ -2,16 +2,16 @@ name: tgrains
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
-  - cppyy
-  - flask
-  - markdown
-  - gunicorn
   - celery=5.0.5
   - click=7.1.2
-  - redis
-  - redis-py
-  - flask-redis
+  - cppyy=2.0.0
+  - flask-redis=0.4.0
+  - flask-sqlalchemy=2.5.1
+  - flask=2.0.1
+  - gunicorn=20.1.0
+  - markdown=3.3.4
+  - mysqlclient=2.0.3
+  - python=3.8
+  - redis-py=3.5.3
+  - redis=5.0.3
   - sqlalchemy=1.3.18
-  - flask-sqlalchemy
-  - mysqlclient
