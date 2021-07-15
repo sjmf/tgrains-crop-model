@@ -12,7 +12,7 @@ For full documentation on the system architecture and further development guidan
 
 This repository is set up to automatically run a build with [Bitbucket Pipelines](https://support.atlassian.com/bitbucket-cloud/docs/get-started-with-bitbucket-pipelines/). This builds the code to a docker container and pushes it to DockerHub. The URL for the container repository is:
 
-https://hub.docker.com/repository/docker/samfinnigan/tgrains-cropmodel-frontend
+https://hub.docker.com/repository/docker/samfinnigan/tgrains-cropmodel-backend
 
 Bitbucket limits build minutes to 50 a month. This project needs double the space to build, so will be billed for double time. You therefore probably only want to push to the master branch when building for production. For source-controlling development code, use a git branch: `git checkout -b development`.
 
