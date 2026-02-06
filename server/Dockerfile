@@ -31,8 +31,15 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install dependencies via apt
+# libTGRAINS.so was compiled against Boost 1.71 (Ubuntu Focal). Noble only has 1.83,
+# so we install the Focal .deb directly — its only deps are libc6/libgcc/libstdc++.
 RUN apt-get update &&\
-    apt-get install -y libgfortran5 libboost-serialization1.83.0 &&\
+    apt-get install -y libgfortran5 curl &&\
+    curl -fsSLo /tmp/libboost-serialization.deb \
+      http://archive.ubuntu.com/ubuntu/pool/main/b/boost1.71/libboost-serialization1.71.0_1.71.0-6ubuntu6_amd64.deb &&\
+    dpkg -i /tmp/libboost-serialization.deb &&\
+    rm /tmp/libboost-serialization.deb &&\
+    apt-get purge -y curl && apt-get autoremove -y &&\
     rm -rf /var/lib/apt/lists/*
 
 # Copy /venv from the build stage
