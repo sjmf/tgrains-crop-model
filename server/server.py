@@ -315,7 +315,7 @@ def post_comment():
 @crops.route('tags', methods=['GET'])
 def get_tags():
     query = Tags.query.order_by(Tags.id)
-    groups = [i[0] for i in query.group_by(Tags.group).with_entities(Tags.group)]
+    groups = [i[0] for i in Tags.query.with_entities(Tags.group).distinct()]
 
     return jsonify({
         'tags': {
