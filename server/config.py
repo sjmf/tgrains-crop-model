@@ -16,7 +16,7 @@ class Config:
     APPLICATION_ROOT = os.environ.get('PROXY_PATH', '/').strip() or '/'
     # NB: Don't use 'localhost' here because MySQL connector assumes you want to look for a socket at /tmp/mysql.sock
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI',
-                                             'mysql://root:devpassword@127.0.0.1:3306/tgrains')
+                                             'mysql+pymysql://root:devpassword@127.0.0.1:3306/tgrains')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     STRING_MAX_LENGTH_TEXTAREA = 10000
