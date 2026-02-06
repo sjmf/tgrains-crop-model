@@ -2,7 +2,7 @@
 
 ## For full documentation, view the page at [https://tgrains.bitbucket.io/](https://tgrains.bitbucket.io/)
 
-This repository contains the backend code for the [TGRAINS crop modelling tool](https://model.tgrains.com/).
+This repository contains the backend code for the [TGRAINS crop modelling tool](https://model.tgrains.net/).
 
 The backend is written in C++ and is included as a .so shared object (a Linux DLL) leveraging the Landscape Model provided by our project partners at [Rothamsted Research](https://www.rothamsted.ac.uk/rothamsted-landscape-model). This is made accessible to the frontend as a REST API via a Python Flask server and Celery task runner.
 
