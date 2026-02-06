@@ -100,7 +100,7 @@ def setup_db(_app, _db):
 
     # Get SQL Database connection parameters
     # Capture groups for each part of connection string
-    p = re.compile(r'^(?P<proto>[A-Za-z]+)://(?P<user>.+):(?P<pass>.+)@'
+    p = re.compile(r'^(?P<proto>[A-Za-z+]+)://(?P<user>.+):(?P<pass>.+)@'
                    r'(?P<host>[A-Za-z0-9.]+):?(?P<port>\d+)?/'
                    r'(?P<db>[A-Za-z0-9]+)?(\?(?P<params>.+))?$')
     m = p.match(_app.config['SQLALCHEMY_DATABASE_URI'])

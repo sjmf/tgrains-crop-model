@@ -9,7 +9,7 @@ dependencies:
   - flask=2.2.5
   - gunicorn=23.0
   - markdown=3.10.1
-  - mysqlclient=2.2
+  - pymysql=1.1
   - python=3.12
   - redis-py=4.6
   - sqlalchemy=1.4
