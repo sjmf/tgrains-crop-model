@@ -8,7 +8,7 @@ import sys
 
 from time import sleep
 from functools import reduce
-from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for, escape
+from flask import Blueprint, Response, Markup, redirect, request, render_template, jsonify, url_for
 from redis.exceptions import ConnectionError
 from sqlalchemy import and_
 
@@ -267,7 +267,8 @@ def get_single_comment(reply_id):
 def post_comment():
     data = request.get_json(force=True)
 
-    # ALWAYS escape text taken from user to prevent XSS scriptjacking attacks
+    # It's unnecessary to escape text here to prevent XSS scriptjacking: 
+    # Vue will escape in the presentation layer ({{}}) instead.
     reply_id = None if 'reply_id' not in data else int(data['reply_id'])
 
     try:
@@ -291,7 +292,7 @@ def post_comment():
 
     # Add the comment to the database
     comment = Comments(
-        text=escape(data['text']),
+        text=data['text'],
         user_id=data['user_id'],
         session_id=data['session_id'],
         state_index=data['index'],
@@ -406,7 +407,7 @@ def add_and_update_user(uid, name=None, email=None):
     if user is None:
         User.create(
             id=uid,
-            name=escape(name) if name else None,
+            name=name if name else None,
             email=email,  # Don't escape email, as it should NEVER be returned in the API or displayed
             hash=generate_hash(email) if email else None
         )
